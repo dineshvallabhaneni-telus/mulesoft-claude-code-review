@@ -118,12 +118,18 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           set -euo pipefail
+
+          # The prompt is fed in on STDIN, never as a positional argument.
+          # --allowedTools is declared variadic (<tools...>), so a trailing
+          # positional prompt is greedily consumed as tool rules; the run then
+          # dies with "Input must be provided either through stdin or as a
+          # prompt argument". Stdin also avoids ARG_MAX on a large prompt.
           claude \
             --print \
             --model "${CLAUDE_MODEL}" \
             --permission-mode acceptEdits \
             --allowedTools "Read,Grep,Glob,Bash" \
-            "$(cat "${RUNNER_TEMP}/review-prompt.md")" \
+            < "${RUNNER_TEMP}/review-prompt.md" \
             | tee "${RUNNER_TEMP}/review-summary.md"
 
       - name: Verify the Word document was generated
