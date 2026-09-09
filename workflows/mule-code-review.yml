@@ -1,4 +1,5 @@
-# MuleSoft full application code review -> CODE_REVIEW_REPORT.docx
+# MuleSoft full application code review
+# -> reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx
 #
 # Copy this file into the MULE APPLICATION repository as:
 #   .github/workflows/mule-code-review.yml
@@ -9,8 +10,9 @@
 #   3. If the review kit is private, add a secret REVIEW_KIT_TOKEN
 #      (a PAT with read access) and uncomment the token line.
 #
-# The review is read-only. Its only output is CODE_REVIEW_REPORT.docx,
-# uploaded as a build artifact.
+# The review is read-only. Its only output is a single timestamped document,
+# reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx, uploaded as a build
+# artifact.
 
 name: MuleSoft Code Review
 
@@ -96,7 +98,8 @@ jobs:
             echo "  ${REVIEW_KIT_DIR}/scripts/md_to_docx.py"
             echo
             echo "Do not review or report findings against review-kit files."
-            echo "Write CODE_REVIEW_REPORT.docx to the repository root."
+            echo "Write the single timestamped Word report into the reports/"
+            echo "folder at the repository root."
             echo
             echo "---"
             echo
@@ -120,15 +123,31 @@ jobs:
       - name: Verify the Word document was generated
         run: |
           set -euo pipefail
-          if [ ! -s CODE_REVIEW_REPORT.docx ]; then
-            echo "::error::CODE_REVIEW_REPORT.docx was not generated."
+          shopt -s nullglob
+          reports=(reports/*.docx)
+
+          if [ ${#reports[@]} -eq 0 ]; then
+            echo "::error::No Word report was generated in reports/."
             exit 1
           fi
-          ls -l CODE_REVIEW_REPORT.docx
+          if [ ${#reports[@]} -gt 1 ]; then
+            echo "::error::Expected a single review document, found ${#reports[@]}:"
+            printf '  %s\n' "${reports[@]}"
+            exit 1
+          fi
+          if [ ! -s "${reports[0]}" ]; then
+            echo "::error::${reports[0]} is empty."
+            exit 1
+          fi
+
+          ls -l "${reports[0]}"
+          echo "REVIEW_DOC=${reports[0]}" >> "${GITHUB_ENV}"
+          echo "### Review document: \`${reports[0]}\`" >> "${GITHUB_STEP_SUMMARY}"
+
           # The review is read-only: nothing but the report may have changed.
-          if [ -n "$(git status --porcelain -- . ':!CODE_REVIEW_REPORT.docx')" ]; then
+          if [ -n "$(git status --porcelain -- . ':!reports/')" ]; then
             echo "::warning::The review modified files other than the report:"
-            git status --porcelain -- . ':!CODE_REVIEW_REPORT.docx'
+            git status --porcelain -- . ':!reports/'
           fi
 
       - name: Publish the review summary to the job summary
@@ -143,6 +162,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mulesoft-code-review-${{ github.sha }}
-          path: CODE_REVIEW_REPORT.docx
+          path: reports/*.docx
           if-no-files-found: error
           retention-days: 30

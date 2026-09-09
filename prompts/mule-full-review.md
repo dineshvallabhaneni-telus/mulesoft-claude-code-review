@@ -67,18 +67,28 @@ Do not report findings against review-kit files.
 
 # REQUIRED DELIVERABLE
 
-The review deliverable is a WORD DOCUMENT:
+The review deliverable is ONE timestamped WORD DOCUMENT in the `reports`
+folder of the repository:
 
-`CODE_REVIEW_REPORT.docx`
+`reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx`
+
+For example:
+
+`reports/CODE_REVIEW_REPORT_20260909-084530.docx`
 
 This document MUST be generated at the end of every run of this prompt.
 
 Rules:
 
-- Always generate `CODE_REVIEW_REPORT.docx` in the repository root.
+- Generate the document in the `reports` folder, not the repository root.
+- Generate exactly ONE document per review run.
+- Do NOT split the review across multiple documents.
 - Do NOT create `CODE_REVIEW_REPORT.md`.
 - Do NOT create any other report or intermediate file.
 - The Word document is the ONLY file created by this review.
+
+The timestamp and the file name are produced by the converter. Do not
+construct the file name yourself and do not pass `--output`.
 
 The report text is piped directly into the converter shipped with this
 review kit:
@@ -87,7 +97,7 @@ review kit:
 
 Full instructions are in PHASE 20.
 
-Do not finish the run without producing `CODE_REVIEW_REPORT.docx`.
+Do not finish the run without producing the Word document.
 
 ---
 
@@ -119,7 +129,8 @@ DO NOT:
 
 Do not make any application changes during the review.
 
-The only file that may be created is `CODE_REVIEW_REPORT.docx`.
+The only file that may be created is the timestamped Word report under
+`reports/`.
 
 ---
 
@@ -893,7 +904,7 @@ correctly:
 
 # PHASE 20 — WORD DOCUMENT GENERATION
 
-The review deliverable is `CODE_REVIEW_REPORT.docx`.
+The review deliverable is ONE timestamped Word document in `reports/`.
 
 Generate it by piping the PHASE 19 report directly into the converter.
 Do not write the report to a Markdown file first.
@@ -924,7 +935,7 @@ Use `.` when the kit and the application are the same repository.
 ```bash
 python3 "${REVIEW_KIT_DIR:-.}/scripts/md_to_docx.py" \
   --input - \
-  --output CODE_REVIEW_REPORT.docx \
+  --output-dir reports \
   --app "<application name>" \
   --branch "$(git rev-parse --abbrev-ref HEAD)" \
   --commit "$(git rev-parse --short HEAD)" <<'MULE_REVIEW_EOF'
@@ -936,9 +947,15 @@ python3 "${REVIEW_KIT_DIR:-.}/scripts/md_to_docx.py" \
 MULE_REVIEW_EOF
 ```
 
+The converter creates the `reports` directory if it does not exist, applies
+the `CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx` name, and prints the path it
+wrote.
+
 Rules for this step:
 
+- Run the converter EXACTLY ONCE, producing a single document.
 - Pass the COMPLETE report, not a summary or an excerpt.
+- Do not pass `--output`; the converter owns the timestamped file name.
 - Keep the `MULE_REVIEW_EOF` delimiter quoted.
 - Never place the delimiter at the start of a report line.
 - The converter installs `python-docx` on first use if it is missing.
@@ -946,15 +963,18 @@ Rules for this step:
 ## Step 3 — Verify the deliverable
 
 ```bash
-ls -l CODE_REVIEW_REPORT.docx
+ls -l reports/
 git status --porcelain
 ```
 
 Confirm that:
 
-1. `CODE_REVIEW_REPORT.docx` exists and is not empty.
-2. No `CODE_REVIEW_REPORT.md` or other report file was created.
-3. No application file was modified.
+1. Exactly one document was produced by this run, and it is not empty.
+2. It is in `reports/` and its name contains the timestamp.
+3. No `CODE_REVIEW_REPORT.md` or other report file was created.
+4. No application file was modified.
+
+Report the generated file name in the final response.
 
 If the converter fails, report the actual error. Do not claim the document
 was generated when it was not.
@@ -963,8 +983,8 @@ was generated when it was not.
 
 # IMPORTANT FINAL RESPONSE REQUIREMENT
 
-`CODE_REVIEW_REPORT.docx` must be generated, and the final response must
-also contain the ACTUAL REVIEW OUTPUT.
+The timestamped Word document must be generated in `reports/`, and the final
+response must also contain the ACTUAL REVIEW OUTPUT.
 
 Do NOT respond only with:
 
@@ -975,7 +995,8 @@ Do NOT respond only with:
 
 In the final response, provide:
 
-1. Confirmation that `CODE_REVIEW_REPORT.docx` was generated.
+1. The generated document path, for example
+   `reports/CODE_REVIEW_REPORT_20260909-084530.docx`.
 2. The finding counts by severity.
 3. The CRITICAL and HIGH findings.
 4. The overall risk and overall recommendation.

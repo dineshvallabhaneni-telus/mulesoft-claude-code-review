@@ -13,11 +13,11 @@ Call the master prompt:
 prompts/mule-full-review.md
 ```
 
-The review is read-only. Its single deliverable is a Word document in the
-repository root:
+The review is read-only. Its single deliverable is one timestamped Word
+document in the `reports` folder:
 
 ```text
-CODE_REVIEW_REPORT.docx
+reports/CODE_REVIEW_REPORT_20260909-084530.docx
 ```
 
 No Markdown report file is produced. The report text is piped straight into
@@ -26,17 +26,17 @@ the converter, so the `.docx` is the only file written.
 ## The converter
 
 `scripts/md_to_docx.py` turns the review Markdown into a styled Word
-document: cover page with app/branch/commit metadata, a Word table of
-contents, styled headings, pipe tables with repeating header rows, shaded
-code blocks, and severity keywords (CRITICAL / HIGH / MEDIUM / LOW / NIT)
-colour-coded throughout.
+document: cover page with app/branch/commit metadata and the generation
+timestamp, a Word table of contents, styled headings, pipe tables with
+repeating header rows, shaded code blocks, and severity keywords
+(CRITICAL / HIGH / MEDIUM / LOW / NIT) colour-coded throughout.
 
 It is invoked by PHASE 20 of the prompt:
 
 ```bash
 python3 scripts/md_to_docx.py \
   --input - \
-  --output CODE_REVIEW_REPORT.docx \
+  --output-dir reports \
   --app "order-experience-api" \
   --branch "$(git rev-parse --abbrev-ref HEAD)" \
   --commit "$(git rev-parse --short HEAD)" <<'MULE_REVIEW_EOF'
@@ -45,12 +45,17 @@ python3 scripts/md_to_docx.py \
 MULE_REVIEW_EOF
 ```
 
+The converter creates `reports/` if needed and names the file
+`CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx`, using the same timestamp that
+appears on the cover page. It prints the path it wrote. One run produces one
+document.
+
 Requirements: Python 3.9+ and `python-docx`. The script installs
 `python-docx` on first use if it is missing.
 
 Run `python3 scripts/md_to_docx.py --help` for all options
-(`--title`, `--repo`, `--review-type`, `--eyebrow`, `--footnote`,
-`--date`, `--no-toc`).
+(`--output-dir`, `--name-prefix`, `--output`, `--title`, `--repo`,
+`--review-type`, `--eyebrow`, `--footnote`, `--date`, `--no-toc`).
 
 ## GitHub Actions
 
@@ -71,9 +76,9 @@ Copy it into the **Mule application repository** as
 
 The workflow checks out the application at the workspace root and this kit
 at `.review-kit`, installs `python-docx` and Claude Code, runs the prompt,
-fails the job if `CODE_REVIEW_REPORT.docx` was not produced, writes the
-review summary to the job summary, and uploads the Word document as a build
-artifact.
+fails the job unless exactly one non-empty document exists in `reports/`,
+writes the review summary to the job summary, and uploads the Word document
+as a build artifact.
 
 Notes:
 

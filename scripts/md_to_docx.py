@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 """Render a MuleSoft code review report (Markdown) as a styled Word document.
 
-Used by `prompts/mule-full-review.md`: the review report is written to a
-temporary Markdown file outside the repository, converted here, and only the
-resulting .docx is left behind as the review deliverable.
+Used by `prompts/mule-full-review.md`: the review report is piped in on stdin
+and a single timestamped .docx is written to `reports/`, which is the only
+review deliverable.
 
 Usage:
     python3 scripts/md_to_docx.py \
-        --input  /tmp/mule-review/report.md \
-        --output CODE_REVIEW_REPORT.docx \
-        --title  "MuleSoft Code Review Report" \
+        --input  - \
         --app    "order-experience-api" \
         --repo   "org/order-experience-api" \
         --branch "main" \
         --commit "0b058e7"
 
-`--input -` reads Markdown from stdin.
+That writes one document per run:
+
+    reports/CODE_REVIEW_REPORT_20260909-084530.docx
+
+Use `--output-dir` to change the directory, `--name-prefix` to change the
+filename prefix, or `--output` to set an explicit path (which bypasses the
+timestamped naming). `--input <file>` reads from a file instead of stdin.
 
 Supported Markdown: ATX headings, paragraphs, bullet/numbered lists (nested),
 pipe tables, fenced and indented code blocks, block quotes, horizontal rules,
@@ -88,6 +92,11 @@ SEVERITY_RE = re.compile(r"\b(CRITICAL|HIGH|MEDIUM|LOW|NIT)\b")
 
 MONO = "Consolas"
 BODY_FONT = "Calibri"
+
+# Output naming: one timestamped document per review, inside `reports/`.
+DEFAULT_OUTPUT_DIR = "reports"
+DEFAULT_NAME_PREFIX = "CODE_REVIEW_REPORT"
+FILENAME_STAMP_FORMAT = "%Y%m%d-%H%M%S"
 
 # ---------------------------------------------------------------------------
 # Low-level OOXML helpers
@@ -691,7 +700,7 @@ def render(document, tokens: list[dict], *, demote_headings: bool) -> None:
             add_rule(document)
 
 
-def build(markdown: str, args) -> "Document":
+def build(markdown: str, args, generated: str) -> "Document":
     document = Document()
     configure_styles(document)
 
@@ -725,7 +734,7 @@ def build(markdown: str, args) -> "Document":
         "branch": args.branch,
         "commit": args.commit,
         "review_type": args.review_type,
-        "generated": args.date or _dt.datetime.now().strftime("%d %b %Y, %H:%M %Z").strip(),
+        "generated": generated,
         "footnote": args.footnote,
     })
 
@@ -742,8 +751,14 @@ def parse_args(argv: list[str] | None = None):
         description="Convert a Markdown code review report into a styled Word document.")
     parser.add_argument("--input", "-i", required=True,
                         help="Markdown input file, or '-' for stdin.")
-    parser.add_argument("--output", "-o", default="CODE_REVIEW_REPORT.docx",
-                        help="Output .docx path (default: CODE_REVIEW_REPORT.docx).")
+    parser.add_argument("--output", "-o", default="",
+                        help="Explicit output .docx path. By default the document is named "
+                             f"{DEFAULT_NAME_PREFIX}_<YYYYMMDD-HHMMSS>.docx inside --output-dir.")
+    parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR, dest="output_dir",
+                        help=f"Directory for the generated document (default: {DEFAULT_OUTPUT_DIR}). "
+                             "Created if it does not exist.")
+    parser.add_argument("--name-prefix", default=DEFAULT_NAME_PREFIX, dest="name_prefix",
+                        help=f"Filename prefix before the timestamp (default: {DEFAULT_NAME_PREFIX}).")
     parser.add_argument("--title", default="", help="Cover title (default: first H1).")
     parser.add_argument("--app", default="", help="Application name shown on the cover.")
     parser.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY", ""),
@@ -777,9 +792,18 @@ def main(argv: list[str] | None = None) -> int:
     if not markdown.strip():
         sys.exit("ERROR: the review report is empty; refusing to write an empty document.")
 
-    document = build(markdown, args)
+    now = _dt.datetime.now()
+    stamp = now.strftime(FILENAME_STAMP_FORMAT)
+    generated = args.date or now.strftime("%d %b %Y %H:%M:%S")
 
-    output = os.path.abspath(args.output)
+    if args.output:
+        output = os.path.abspath(args.output)
+    else:
+        output = os.path.abspath(
+            os.path.join(args.output_dir, f"{args.name_prefix}_{stamp}.docx"))
+
+    document = build(markdown, args, generated)
+
     parent = os.path.dirname(output)
     if parent:
         os.makedirs(parent, exist_ok=True)

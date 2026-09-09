@@ -79,14 +79,15 @@ Do not:
 - reset repository state
 - perform remediation
 
-The only file that may be created is the Word review report:
+The only file that may be created is ONE timestamped Word review report:
 
-`CODE_REVIEW_REPORT.docx`
+`reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx`
 
 Do not create `CODE_REVIEW_REPORT.md` or any other intermediate report file.
 
-Generate the Word document by piping the review Markdown into
-`scripts/md_to_docx.py` as described in `prompts/mule-full-review.md`
+Generate exactly one document per review run by piping the review Markdown
+into `scripts/md_to_docx.py`, which owns the `reports/` location and the
+timestamped file name, as described in `prompts/mule-full-review.md`
 (PHASE 20).
 
 Do not modify any existing application file.
@@ -1406,8 +1407,8 @@ reliability, data integrity, or production availability.
 
 # 40. Final Report Structure
 
-The report is written as Markdown and delivered as
-`CODE_REVIEW_REPORT.docx`.
+The report is written as Markdown and delivered as a single timestamped Word
+document, `reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx`.
 
 Use `#` for the report title, `##` for sections, `###` for individual
 findings, pipe tables for summary tables, `**bold**` for field labels, and
@@ -1612,7 +1613,8 @@ The review is complete only when:
 - limitations have been documented
 - overall risk has been determined
 - final recommendation has been provided
-- `CODE_REVIEW_REPORT.docx` has been generated and verified
+- the single timestamped Word report has been generated in `reports/`
+  and verified
 
 Do not respond with only:
 

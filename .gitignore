@@ -5,5 +5,5 @@
 __pycache__/
 *.pyc
 
-# Generated review deliverable
-CODE_REVIEW_REPORT.docx
+# Generated review deliverables
+reports/
