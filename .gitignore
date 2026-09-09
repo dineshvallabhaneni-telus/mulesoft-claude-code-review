@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# Python (converter)
+__pycache__/
+*.pyc
+
+# Generated review deliverable
+CODE_REVIEW_REPORT.docx

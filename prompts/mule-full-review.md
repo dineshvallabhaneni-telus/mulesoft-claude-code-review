@@ -49,6 +49,46 @@ Do not ignore those rules.
 
 `references/*.md` define detailed category-specific review rules.
 
+## Review kit location
+
+All review-kit paths in this prompt (`CLAUDE.md`, `review.md`,
+`finding-taxonomy.md`, `skills/mule-code-review/SKILL.md`, `references/*.md`,
+`scripts/md_to_docx.py`) are relative to the review kit directory.
+
+If the environment variable `REVIEW_KIT_DIR` is set, resolve them under that
+directory. Otherwise resolve them from the repository root.
+
+The application under review is always the repository root, never the review
+kit directory.
+
+Do not report findings against review-kit files.
+
+---
+
+# REQUIRED DELIVERABLE
+
+The review deliverable is a WORD DOCUMENT:
+
+`CODE_REVIEW_REPORT.docx`
+
+This document MUST be generated at the end of every run of this prompt.
+
+Rules:
+
+- Always generate `CODE_REVIEW_REPORT.docx` in the repository root.
+- Do NOT create `CODE_REVIEW_REPORT.md`.
+- Do NOT create any other report or intermediate file.
+- The Word document is the ONLY file created by this review.
+
+The report text is piped directly into the converter shipped with this
+review kit:
+
+`scripts/md_to_docx.py`
+
+Full instructions are in PHASE 20.
+
+Do not finish the run without producing `CODE_REVIEW_REPORT.docx`.
+
 ---
 
 # READ-ONLY REQUIREMENT
@@ -79,8 +119,7 @@ DO NOT:
 
 Do not make any application changes during the review.
 
-If a report file is explicitly requested, the only file that may be created
-is the requested review report.
+The only file that may be created is `CODE_REVIEW_REPORT.docx`.
 
 ---
 
@@ -131,6 +170,7 @@ PHASE 16 — End-to-End Integration Consistency
 PHASE 17 — Cross-Cutting Finding Validation
 PHASE 18 — Risk Assessment
 PHASE 19 — Final Review Report
+PHASE 20 — Word Document Generation
 
 Do not skip phases merely because one category appears simple.
 
@@ -836,11 +876,95 @@ The final report must contain:
 32. Overall Risk
 33. Overall Recommendation
 
+Write the report as Markdown. It is converted to Word in PHASE 20.
+
+Markdown formatting rules for the report, so the Word document renders
+correctly:
+
+- Use `#` for the report title and `##` / `###` for sections and findings.
+- Use pipe tables for the findings summary and any inventory tables.
+- Use `**bold**` for field labels such as `**Severity:**`.
+- Use fenced code blocks for XML, DataWeave, SQL, YAML and log evidence.
+- Write severity keywords in upper case (CRITICAL, HIGH, MEDIUM, LOW, NIT)
+  so they are colour-coded in the Word document.
+- Do not use raw HTML.
+
+---
+
+# PHASE 20 — WORD DOCUMENT GENERATION
+
+The review deliverable is `CODE_REVIEW_REPORT.docx`.
+
+Generate it by piping the PHASE 19 report directly into the converter.
+Do not write the report to a Markdown file first.
+
+## Step 1 — Collect the document metadata
+
+From repository evidence and Git:
+
+- application name (`artifactId` / `name` in `pom.xml`)
+- current branch
+- current commit
+
+```bash
+git rev-parse --abbrev-ref HEAD
+git rev-parse --short HEAD
+```
+
+## Step 2 — Generate the Word document
+
+Run ONE command that pipes the complete report into the converter through a
+quoted heredoc. The quoted delimiter keeps `$`, backticks, quotes and
+backslashes in the report literal, so DataWeave, SQL and property
+expressions are preserved exactly.
+
+`REVIEW_KIT_DIR` is the directory where this review kit is checked out.
+Use `.` when the kit and the application are the same repository.
+
+```bash
+python3 "${REVIEW_KIT_DIR:-.}/scripts/md_to_docx.py" \
+  --input - \
+  --output CODE_REVIEW_REPORT.docx \
+  --app "<application name>" \
+  --branch "$(git rev-parse --abbrev-ref HEAD)" \
+  --commit "$(git rev-parse --short HEAD)" <<'MULE_REVIEW_EOF'
+# MuleSoft Full Application Code Review Report
+
+## 1. Executive Summary
+
+<the complete PHASE 19 report in Markdown>
+MULE_REVIEW_EOF
+```
+
+Rules for this step:
+
+- Pass the COMPLETE report, not a summary or an excerpt.
+- Keep the `MULE_REVIEW_EOF` delimiter quoted.
+- Never place the delimiter at the start of a report line.
+- The converter installs `python-docx` on first use if it is missing.
+
+## Step 3 — Verify the deliverable
+
+```bash
+ls -l CODE_REVIEW_REPORT.docx
+git status --porcelain
+```
+
+Confirm that:
+
+1. `CODE_REVIEW_REPORT.docx` exists and is not empty.
+2. No `CODE_REVIEW_REPORT.md` or other report file was created.
+3. No application file was modified.
+
+If the converter fails, report the actual error. Do not claim the document
+was generated when it was not.
+
 ---
 
 # IMPORTANT FINAL RESPONSE REQUIREMENT
 
-The final response must contain the ACTUAL REVIEW OUTPUT.
+`CODE_REVIEW_REPORT.docx` must be generated, and the final response must
+also contain the ACTUAL REVIEW OUTPUT.
 
 Do NOT respond only with:
 
@@ -849,11 +973,12 @@ Do NOT respond only with:
 - "See report"
 - "The report has been generated"
 
-If a report file was not explicitly requested, display the complete review
-in the response.
+In the final response, provide:
 
-If `CODE_REVIEW_REPORT.md` was explicitly requested, create only that report
-file and also provide a concise summary in the final response.
+1. Confirmation that `CODE_REVIEW_REPORT.docx` was generated.
+2. The finding counts by severity.
+3. The CRITICAL and HIGH findings.
+4. The overall risk and overall recommendation.
 
 ---
 

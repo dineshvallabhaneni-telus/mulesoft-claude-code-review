@@ -79,11 +79,15 @@ Do not:
 - reset repository state
 - perform remediation
 
-The only file that may be created is:
+The only file that may be created is the Word review report:
 
-`CODE_REVIEW_REPORT.md`
+`CODE_REVIEW_REPORT.docx`
 
-and only when the user explicitly requests a generated report file.
+Do not create `CODE_REVIEW_REPORT.md` or any other intermediate report file.
+
+Generate the Word document by piping the review Markdown into
+`scripts/md_to_docx.py` as described in `prompts/mule-full-review.md`
+(PHASE 20).
 
 Do not modify any existing application file.
 
@@ -1402,6 +1406,14 @@ reliability, data integrity, or production availability.
 
 # 40. Final Report Structure
 
+The report is written as Markdown and delivered as
+`CODE_REVIEW_REPORT.docx`.
+
+Use `#` for the report title, `##` for sections, `###` for individual
+findings, pipe tables for summary tables, `**bold**` for field labels, and
+fenced code blocks for evidence. Write severity keywords in upper case.
+Do not use raw HTML.
+
 The final review output MUST contain:
 
 # MuleSoft Full Application Code Review
@@ -1600,6 +1612,7 @@ The review is complete only when:
 - limitations have been documented
 - overall risk has been determined
 - final recommendation has been provided
+- `CODE_REVIEW_REPORT.docx` has been generated and verified
 
 Do not respond with only:
 

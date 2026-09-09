@@ -222,11 +222,15 @@ When performing a read-only review, Claude MUST NOT:
 - perform remediation unless explicitly requested
 
 The only application-related file that may be created during a
-read-only review is:
+read-only review is the Word review report:
 
-`CODE_REVIEW_REPORT.md`
+`CODE_REVIEW_REPORT.docx`
 
-and only when the user explicitly requests the report as a file.
+Do not create `CODE_REVIEW_REPORT.md` or any other intermediate report file.
+
+The Word document is produced by piping the review Markdown into
+`scripts/md_to_docx.py` as described in `prompts/mule-full-review.md`
+(PHASE 20).
 
 Do not modify existing application files during a read-only review.
 
@@ -977,7 +981,8 @@ Do not provide generic praise without evidence.
 
 # 30. Review Output
 
-For a full application review, the output must follow `review.md`.
+For a full application review, the output must follow `review.md`, and the
+report must be delivered as `CODE_REVIEW_REPORT.docx`.
 
 At minimum, include:
 

@@ -1,0 +1,148 @@
+# MuleSoft full application code review -> CODE_REVIEW_REPORT.docx
+#
+# Copy this file into the MULE APPLICATION repository as:
+#   .github/workflows/mule-code-review.yml
+#
+# Required setup in the application repository:
+#   1. Secret ANTHROPIC_API_KEY.
+#   2. Set REVIEW_KIT_REPO below to this review kit's repository.
+#   3. If the review kit is private, add a secret REVIEW_KIT_TOKEN
+#      (a PAT with read access) and uncomment the token line.
+#
+# The review is read-only. Its only output is CODE_REVIEW_REPORT.docx,
+# uploaded as a build artifact.
+
+name: MuleSoft Code Review
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: mule-code-review-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REVIEW_KIT_REPO: your-org/mulesoft-claude-code-review
+  REVIEW_KIT_REF: main
+  REVIEW_KIT_DIR: .review-kit
+  CLAUDE_MODEL: claude-opus-5
+
+jobs:
+  code-review:
+    name: Full application review
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout Mule application
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout review kit
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.REVIEW_KIT_REPO }}
+          ref: ${{ env.REVIEW_KIT_REF }}
+          path: ${{ env.REVIEW_KIT_DIR }}
+          # token: ${{ secrets.REVIEW_KIT_TOKEN }}   # uncomment if the kit repo is private
+
+      - name: Keep the review kit out of the application working tree
+        run: |
+          # The review verifies `git status --porcelain` is clean, so the kit
+          # checkout must not appear as an untracked change. This writes to
+          # .git/info/exclude only, which is local and never committed.
+          echo "${REVIEW_KIT_DIR}/" >> .git/info/exclude
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Word converter dependency
+        run: python3 -m pip install --quiet --disable-pip-version-check python-docx
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Build the review prompt
+        run: |
+          set -euo pipefail
+          {
+            echo "The MuleSoft application under review is this repository root."
+            echo
+            echo "The review kit is checked out at: ${REVIEW_KIT_DIR}"
+            echo
+            echo "Resolve every review-kit path referenced below under that"
+            echo "directory, for example:"
+            echo "  ${REVIEW_KIT_DIR}/CLAUDE.md"
+            echo "  ${REVIEW_KIT_DIR}/review.md"
+            echo "  ${REVIEW_KIT_DIR}/finding-taxonomy.md"
+            echo "  ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/SKILL.md"
+            echo "  ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/"
+            echo "  ${REVIEW_KIT_DIR}/scripts/md_to_docx.py"
+            echo
+            echo "Do not review or report findings against review-kit files."
+            echo "Write CODE_REVIEW_REPORT.docx to the repository root."
+            echo
+            echo "---"
+            echo
+            cat "${REVIEW_KIT_DIR}/prompts/mule-full-review.md"
+          } > "${RUNNER_TEMP}/review-prompt.md"
+          wc -l "${RUNNER_TEMP}/review-prompt.md"
+
+      - name: Run MuleSoft code review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -euo pipefail
+          claude \
+            --print \
+            --model "${CLAUDE_MODEL}" \
+            --permission-mode acceptEdits \
+            --allowedTools "Read,Grep,Glob,Bash" \
+            "$(cat "${RUNNER_TEMP}/review-prompt.md")" \
+            | tee "${RUNNER_TEMP}/review-summary.md"
+
+      - name: Verify the Word document was generated
+        run: |
+          set -euo pipefail
+          if [ ! -s CODE_REVIEW_REPORT.docx ]; then
+            echo "::error::CODE_REVIEW_REPORT.docx was not generated."
+            exit 1
+          fi
+          ls -l CODE_REVIEW_REPORT.docx
+          # The review is read-only: nothing but the report may have changed.
+          if [ -n "$(git status --porcelain -- . ':!CODE_REVIEW_REPORT.docx')" ]; then
+            echo "::warning::The review modified files other than the report:"
+            git status --porcelain -- . ':!CODE_REVIEW_REPORT.docx'
+          fi
+
+      - name: Publish the review summary to the job summary
+        if: always()
+        run: |
+          if [ -s "${RUNNER_TEMP}/review-summary.md" ]; then
+            cat "${RUNNER_TEMP}/review-summary.md" >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Upload the Word review report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mulesoft-code-review-${{ github.sha }}
+          path: CODE_REVIEW_REPORT.docx
+          if-no-files-found: error
+          retention-days: 30
