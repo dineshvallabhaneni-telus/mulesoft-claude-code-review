@@ -97,6 +97,12 @@ jobs:
             echo "  ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/"
             echo "  ${REVIEW_KIT_DIR}/scripts/generate_report.py"
             echo
+            echo "SKILL.md and every references/*.md live under"
+            echo "  ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/"
+            echo "and NOT at the kit root. In particular, read"
+            echo "  ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/review-report-schema.md"
+            echo "before writing the PHASE 19 JSON. Do not guess the schema."
+            echo
             echo "Do not review or report findings against review-kit files."
             echo "Write the single timestamped Word report into the reports/"
             echo "folder at the repository root."

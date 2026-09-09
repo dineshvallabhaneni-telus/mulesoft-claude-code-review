@@ -52,12 +52,29 @@ Do not ignore those rules.
 
 ## Review kit location
 
-All review-kit paths in this prompt (`CLAUDE.md`, `review.md`,
-`finding-taxonomy.md`, `skills/mule-code-review/SKILL.md`, `references/*.md`,
-`scripts/generate_report.py`) are relative to the review kit directory.
+All review-kit paths in this prompt are relative to the review kit directory.
 
 If the environment variable `REVIEW_KIT_DIR` is set, resolve them under that
 directory. Otherwise resolve them from the repository root.
+
+The kit files are laid out as follows. `SKILL.md` and every `references/*.md`
+live under `.claude/skills/mule-code-review/`, NOT at the kit root:
+
+```text
+<kit>/CLAUDE.md
+<kit>/review.md
+<kit>/finding-taxonomy.md
+<kit>/scripts/generate_report.py
+<kit>/.claude/skills/mule-code-review/SKILL.md
+<kit>/.claude/skills/mule-code-review/references/*.md
+```
+
+So `references/review-report-schema.md` in this prompt means
+`<kit>/.claude/skills/mule-code-review/references/review-report-schema.md`.
+
+If a referenced file is not where you expect, locate it before continuing.
+Do not guess the structured JSON schema — read
+`references/review-report-schema.md` first.
 
 The application under review is always the repository root, never the review
 kit directory.
