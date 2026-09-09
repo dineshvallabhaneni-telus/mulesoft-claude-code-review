@@ -83,12 +83,14 @@ The only file that may be created is ONE timestamped Word review report:
 
 `reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx`
 
-Do not create `CODE_REVIEW_REPORT.md` or any other intermediate report file.
+Do not create `CODE_REVIEW_REPORT.md`, a findings JSON file, or any other
+intermediate report file.
 
-Generate exactly one document per review run by piping the review Markdown
-into `scripts/md_to_docx.py`, which owns the `reports/` location and the
-timestamped file name, as described in `prompts/mule-full-review.md`
-(PHASE 20).
+Generate exactly one document per review run by piping the structured review
+JSON into `scripts/generate_report.py`, which owns the document structure,
+the `reports/` location and the timestamped file name, as described in
+`prompts/mule-full-review.md` (PHASE 19 and PHASE 20). The JSON schema is
+defined by `references/review-report-schema.md`.
 
 Do not modify any existing application file.
 
@@ -1407,155 +1409,82 @@ reliability, data integrity, or production availability.
 
 # 40. Final Report Structure
 
-The report is written as Markdown and delivered as a single timestamped Word
-document, `reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx`.
-
-Use `#` for the report title, `##` for sections, `###` for individual
-findings, pipe tables for summary tables, `**bold**` for field labels, and
-fenced code blocks for evidence. Write severity keywords in upper case.
-Do not use raw HTML.
-
-The final review output MUST contain:
-
-# MuleSoft Full Application Code Review
-
-## Executive Summary
-
-Provide a concise executive-level summary.
-
-## Review Scope
-
-Describe what was reviewed.
-
-## Review Methodology
-
-Describe how the repository was analyzed.
-
-## Application Inventory
-
-Provide application and technology inventory.
-
-## Architecture Summary
-
-Describe the overall architecture.
-
-## Integration Inventory
-
-Describe major integration boundaries.
-
-## Critical Findings
-
-List all CRITICAL findings.
-
-## High Findings
-
-List all HIGH findings.
-
-## Medium Findings
-
-List all MEDIUM findings.
-
-## Low Findings
-
-List all LOW findings.
-
-## Security Assessment
-
-Provide security assessment.
-
-## Mule Architecture Assessment
-
-Provide architecture assessment.
-
-## Mule XML Assessment
-
-Provide Mule XML assessment.
-
-## Error Handling Assessment
-
-Provide error-handling assessment.
-
-## DataWeave Assessment
-
-Provide DataWeave assessment.
-
-## API Assessment
-
-Provide API assessment.
-
-## Connector Assessment
-
-Provide connector assessment.
-
-## Database Assessment
-
-Provide database assessment.
-
-## Messaging Assessment
-
-Provide messaging assessment.
-
-## Performance Assessment
-
-Provide performance assessment.
-
-## Logging and Observability Assessment
-
-Provide logging assessment.
-
-## MUnit Assessment
-
-Provide MUnit assessment.
-
-## Maven/Dependency Assessment
-
-Provide Maven assessment.
-
-## Configuration Assessment
-
-Provide configuration assessment.
-
-## Maintainability Assessment
-
-Provide maintainability assessment.
-
-## Production Readiness Assessment
-
-Provide production-readiness assessment.
-
-## Positive Observations
-
-List meaningful strengths.
-
-## Findings Summary
-
-Provide counts by severity and category.
-
-## Risk Summary
-
-Summarize major risks.
-
-## Top 10 Remediation Priorities
-
-Provide ranked remediation priorities.
-
-## Review Limitations
-
-Document areas that could not be verified.
-
-## Overall Risk
-
-CRITICAL / HIGH / MEDIUM / LOW
-
-## Recommendation
-
-APPROVE
-
-APPROVE WITH MINOR CHANGES
-
-CHANGES REQUIRED
-
-HIGH RISK
+The review is authored as a single structured JSON object and delivered as a
+single timestamped Word document,
+`reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx`.
+
+`scripts/generate_report.py` owns the document: the section numbering, the
+tables, the colour coding and the appendices. The JSON supplies only the
+content. The schema, with a worked example for every section, is defined by:
+
+`references/review-report-schema.md`
+
+Narrative strings accept `**bold**` and `` `code` `` inline markup, and a
+blank line starts a new paragraph. Do not put Markdown headings, tables,
+lists or fenced blocks inside a JSON string. Write severity, confidence,
+rating and status values in upper case.
+
+The generated document contains the following, in this order. The right-hand
+column is the JSON key that supplies it.
+
+| Document section | JSON key |
+|---|---|
+| Cover page | `application`, `review` |
+| 1. Executive Summary | `executiveSummary` |
+| 1.1 Review Scope | `scope` |
+| 1.2 Review Methodology | `methodology` |
+| 1.3 Findings by Severity | counted from `findings` |
+| 1.4 Findings by Category | counted from `findings` |
+| 2. Application Inventory | `inventory` |
+| 2.1 Technology Stack | `technologyStack` |
+| 2.2 Architecture Summary | `architectureSummary` |
+| 2.3 Integration Inventory | `integrations` |
+| 3.1 Critical Findings | `findings` |
+| 3.2 High Findings | `findings` |
+| 3.3 Medium Findings | `findings` |
+| 3.4 Low Findings | `findings` |
+| 3.5 Nit Findings | `findings` |
+| 4.1 Security Assessment | `assessments.security` |
+| 4.2 Mule Architecture Assessment | `assessments.architecture` |
+| 4.3 Mule XML Assessment | `assessments.muleXml` |
+| 4.4 Error Handling Assessment | `assessments.errorHandling` |
+| 4.5 DataWeave Assessment | `assessments.dataweave` |
+| 4.6 API Assessment | `assessments.api` |
+| 4.7 Connectors Assessment | `assessments.connectors` |
+| 4.8 Database Assessment | `assessments.database` |
+| 4.9 Messaging Assessment | `assessments.messaging` |
+| 4.10 Performance Assessment | `assessments.performance` |
+| 4.11 Logging and Observability Assessment | `assessments.logging` |
+| 4.12 MUnit Assessment | `assessments.munit` |
+| 4.13 Maven and Dependencies Assessment | `assessments.maven` |
+| 4.14 Configuration Assessment | `assessments.configuration` |
+| 4.15 Maintainability Assessment | `assessments.maintainability` |
+| 5. Production Readiness Assessment | `productionReadiness` |
+| 5.1 Readiness Dimensions | `productionReadiness.dimensions` |
+| 5.2 Positive Observations | `positiveObservations` |
+| 6.1 Risk Summary | `riskSummary` |
+| 6.2 Top 10 Remediation Priorities | `remediationPriorities` |
+| 6.3 Review Limitations | `limitations` |
+| 6.4 Overall Risk and Recommendation | `overallRisk`, `overallRecommendation`, `recommendationRationale` |
+| Appendix A — Complete Findings Inventory | `findings` |
+| Appendix B — Finding Evidence Detail | `findings[].evidenceSnippet` |
+| Appendix C — Review Coverage and Boundaries | `coverage` |
+
+Every section renders whether or not the JSON supplies it. An unsupplied
+assessment renders as `NOT ASSESSED` and an empty severity states that no
+findings of that severity were identified, so nothing is silently dropped.
+
+Do not write the severity or category counts yourself. The generator derives
+them from `findings`, so they cannot disagree with the detailed findings.
+
+`overallRisk` must be one of CRITICAL, HIGH, MEDIUM, LOW.
+
+`overallRecommendation` must be one of APPROVE, APPROVE WITH MINOR CHANGES,
+CHANGES REQUIRED, HIGH RISK.
+
+Both are floored against the finding evidence by the generator. A verdict
+less severe than the findings support is raised, and the correction is
+recorded in section 6.4.
 
 ---
 

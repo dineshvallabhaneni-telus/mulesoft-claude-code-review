@@ -36,6 +36,7 @@ Before reviewing the application, read and follow:
 2. `skills/mule-code-review/SKILL.md`
 3. `review.md`
 4. all applicable files under `references/`
+5. `references/review-report-schema.md`, before writing the PHASE 19 JSON
 
 The files under `references/` contain detailed review rules and finding IDs.
 
@@ -53,7 +54,7 @@ Do not ignore those rules.
 
 All review-kit paths in this prompt (`CLAUDE.md`, `review.md`,
 `finding-taxonomy.md`, `skills/mule-code-review/SKILL.md`, `references/*.md`,
-`scripts/md_to_docx.py`) are relative to the review kit directory.
+`scripts/generate_report.py`) are relative to the review kit directory.
 
 If the environment variable `REVIEW_KIT_DIR` is set, resolve them under that
 directory. Otherwise resolve them from the repository root.
@@ -84,18 +85,24 @@ Rules:
 - Generate exactly ONE document per review run.
 - Do NOT split the review across multiple documents.
 - Do NOT create `CODE_REVIEW_REPORT.md`.
+- Do NOT create a findings JSON file.
 - Do NOT create any other report or intermediate file.
 - The Word document is the ONLY file created by this review.
 
-The timestamp and the file name are produced by the converter. Do not
+The timestamp and the file name are produced by the generator. Do not
 construct the file name yourself and do not pass `--output`.
 
-The report text is piped directly into the converter shipped with this
-review kit:
+The review is written as a structured JSON object (PHASE 19) and piped
+directly into the report generator shipped with this review kit:
 
-`scripts/md_to_docx.py`
+`scripts/generate_report.py`
 
-Full instructions are in PHASE 20.
+The generator owns the document structure, section numbering, tables and
+colour coding. It is defined by:
+
+`references/review-report-schema.md`
+
+Full instructions are in PHASE 19 and PHASE 20.
 
 Do not finish the run without producing the Word document.
 
@@ -847,58 +854,70 @@ the same underlying cause.
 
 ---
 
-# PHASE 19 — FINAL REPORT
+# PHASE 19 — STRUCTURED REVIEW EVIDENCE
 
-Produce the final review according to `review.md`.
+Produce the final review as a single STRUCTURED JSON OBJECT, not as prose
+and not as Markdown.
 
-The final report must contain:
+The schema is defined by:
 
-1. Executive Summary
-2. Review Scope
-3. Review Methodology
-4. Application Inventory
-5. Technology Stack
-6. Architecture Summary
-7. Integration Inventory
-8. Critical Findings
-9. High Findings
-10. Medium Findings
-11. Low Findings
-12. Security Assessment
-13. Mule Architecture Assessment
-14. Mule XML Assessment
-15. Error Handling Assessment
-16. DataWeave Assessment
-17. API Assessment
-18. Connector Assessment
-19. Database Assessment
-20. Messaging Assessment
-21. Performance Assessment
-22. Logging and Observability Assessment
-23. MUnit Assessment
-24. Maven/Dependency Assessment
-25. Configuration Assessment
-26. Maintainability Assessment
-27. Production Readiness Assessment
-28. Positive Observations
-29. Risk Summary
-30. Top 10 Remediation Priorities
-31. Review Limitations
-32. Overall Risk
-33. Overall Recommendation
+`references/review-report-schema.md`
 
-Write the report as Markdown. It is converted to Word in PHASE 20.
+Read that file before writing the JSON. It gives the exact key names, the
+allowed enum values, and a worked example for every section.
 
-Markdown formatting rules for the report, so the Word document renders
-correctly:
+The generator in PHASE 20 owns the document structure, the section
+numbering, the tables and the colour coding. Your job is the content.
 
-- Use `#` for the report title and `##` / `###` for sections and findings.
-- Use pipe tables for the findings summary and any inventory tables.
-- Use `**bold**` for field labels such as `**Severity:**`.
-- Use fenced code blocks for XML, DataWeave, SQL, YAML and log evidence.
-- Write severity keywords in upper case (CRITICAL, HIGH, MEDIUM, LOW, NIT)
-  so they are colour-coded in the Word document.
-- Do not use raw HTML.
+Top-level keys, all required:
+
+```text
+application              overall application metadata
+review                   repository, branch, commit
+executiveSummary         narrative
+scope                    statement, included, excluded
+methodology              list of methodology steps
+inventory                review.md section 17 areas
+technologyStack          component / version / evidence / notes
+architectureSummary      narrative
+integrations             review.md section 18 integration boundaries
+findings                 every validated finding
+assessments              the 15 category assessments
+productionReadiness      summary plus the 10 readiness dimensions
+positiveObservations     evidence-backed strengths
+riskSummary              risk themes
+remediationPriorities    ranked top 10
+limitations              what could not be verified
+coverage                 per-phase coverage
+overallRisk              CRITICAL | HIGH | MEDIUM | LOW
+overallRecommendation    APPROVE | APPROVE WITH MINOR CHANGES |
+                         CHANGES REQUIRED | HIGH RISK
+recommendationRationale  narrative
+```
+
+Content rules:
+
+- Every finding needs `id`, `severity`, `category`, `file`, `location`,
+  `confidence`, `problem`, `evidence`, `impact` and `recommendation`.
+- Use the finding IDs defined by the applicable `references/*.md` rule.
+- Add `evidenceSnippet` with the verbatim repository excerpt whenever a
+  short excerpt proves the finding. It renders as a code block under
+  Evidence and again in Appendix B.
+- Write `severity` and `confidence` in upper case, from the allowed values
+  only. Anything else is excluded from the counts and reported separately.
+- Do not write the severity counts or the category counts. The generator
+  counts them from `findings`, so they cannot disagree with the detail.
+- Use `"Not identified"` where repository evidence does not provide the
+  information. Do not guess and do not omit the key.
+- Narrative strings accept `**bold**` and `` `code` `` inline, and a blank
+  line starts a new paragraph. Do not use Markdown headings, tables, lists
+  or fenced blocks inside a string.
+- Every assessment area and every readiness dimension you did not assess
+  can be omitted; it renders as NOT ASSESSED rather than disappearing.
+
+State `overallRisk` and `overallRecommendation` honestly. The generator
+floors both against the finding evidence and records any correction in the
+report, so understating a verdict does not hide it.
 
 ---
 
@@ -906,8 +925,8 @@ correctly:
 
 The review deliverable is ONE timestamped Word document in `reports/`.
 
-Generate it by piping the PHASE 19 report directly into the converter.
-Do not write the report to a Markdown file first.
+Generate it by piping the PHASE 19 JSON directly into the generator.
+Do not write the JSON or a Markdown report to a file first.
 
 ## Step 1 — Collect the document metadata
 
@@ -924,41 +943,47 @@ git rev-parse --short HEAD
 
 ## Step 2 — Generate the Word document
 
-Run ONE command that pipes the complete report into the converter through a
+Run ONE command that pipes the complete JSON into the generator through a
 quoted heredoc. The quoted delimiter keeps `$`, backticks, quotes and
-backslashes in the report literal, so DataWeave, SQL and property
-expressions are preserved exactly.
+backslashes literal, so DataWeave, SQL and property expressions inside the
+evidence survive intact.
 
 `REVIEW_KIT_DIR` is the directory where this review kit is checked out.
 Use `.` when the kit and the application are the same repository.
 
 ```bash
-python3 "${REVIEW_KIT_DIR:-.}/scripts/md_to_docx.py" \
+python3 "${REVIEW_KIT_DIR:-.}/scripts/generate_report.py" \
   --input - \
   --output-dir reports \
   --app "<application name>" \
   --branch "$(git rev-parse --abbrev-ref HEAD)" \
   --commit "$(git rev-parse --short HEAD)" <<'MULE_REVIEW_EOF'
-# MuleSoft Full Application Code Review Report
-
-## 1. Executive Summary
-
-<the complete PHASE 19 report in Markdown>
+{
+  "application": { "name": "<application name>", ... },
+  ...
+  "recommendationRationale": "..."
+}
 MULE_REVIEW_EOF
 ```
 
-The converter creates the `reports` directory if it does not exist, applies
-the `CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx` name, and prints the path it
-wrote.
+The generator creates the `reports` directory if it does not exist, applies
+the `CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx` name, re-opens the saved
+document to confirm every required section is present, and prints the path
+it wrote along with the reconciled verdict and the finding counts.
 
 Rules for this step:
 
-- Run the converter EXACTLY ONCE, producing a single document.
-- Pass the COMPLETE report, not a summary or an excerpt.
-- Do not pass `--output`; the converter owns the timestamped file name.
+- Run the generator EXACTLY ONCE, producing a single document.
+- Pass the COMPLETE JSON, not a summary or an excerpt.
+- The JSON must be valid. Escape newlines inside strings as `\n`; the
+  generator rejects malformed JSON rather than writing a partial document.
+- Do not pass `--output`; the generator owns the timestamped file name.
 - Keep the `MULE_REVIEW_EOF` delimiter quoted.
-- Never place the delimiter at the start of a report line.
-- The converter installs `python-docx` on first use if it is missing.
+- Never place the delimiter at the start of a JSON line.
+- The generator installs `python-docx` on first use if it is missing.
+
+If the generator reports a missing section or invalid JSON, fix the JSON and
+run it again. Do not hand-build the document.
 
 ## Step 3 — Verify the deliverable
 
@@ -976,7 +1001,7 @@ Confirm that:
 
 Report the generated file name in the final response.
 
-If the converter fails, report the actual error. Do not claim the document
+If the generator fails, report the actual error. Do not claim the document
 was generated when it was not.
 
 ---

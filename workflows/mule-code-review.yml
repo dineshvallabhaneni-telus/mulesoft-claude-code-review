@@ -69,7 +69,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Word converter dependency
+      - name: Install Word report generator dependency
         run: python3 -m pip install --quiet --disable-pip-version-check python-docx
 
       - name: Set up Node
@@ -95,7 +95,7 @@ jobs:
             echo "  ${REVIEW_KIT_DIR}/finding-taxonomy.md"
             echo "  ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/SKILL.md"
             echo "  ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/"
-            echo "  ${REVIEW_KIT_DIR}/scripts/md_to_docx.py"
+            echo "  ${REVIEW_KIT_DIR}/scripts/generate_report.py"
             echo
             echo "Do not review or report findings against review-kit files."
             echo "Write the single timestamped Word report into the reports/"

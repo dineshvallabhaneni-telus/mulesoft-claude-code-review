@@ -226,12 +226,14 @@ read-only review is ONE timestamped Word review report:
 
 `reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx`
 
-Do not create `CODE_REVIEW_REPORT.md` or any other intermediate report file.
+Do not create `CODE_REVIEW_REPORT.md`, a findings JSON file, or any other
+intermediate report file.
 
 Generate exactly one document per review run. The Word document is produced
-by piping the review Markdown into `scripts/md_to_docx.py`, which owns the
-`reports/` location and the timestamped file name, as described in
-`prompts/mule-full-review.md` (PHASE 20).
+by piping the structured review JSON into `scripts/generate_report.py`, which
+owns the document structure, the `reports/` location and the timestamped file
+name, as described in `prompts/mule-full-review.md` (PHASE 19 and PHASE 20).
+The JSON schema is defined by `references/review-report-schema.md`.
 
 Do not modify existing application files during a read-only review.
 
