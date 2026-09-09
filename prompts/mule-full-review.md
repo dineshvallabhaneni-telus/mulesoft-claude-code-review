@@ -1,7 +1,8 @@
+REVIEW_KIT_DIR = $GITHUB_WORKSPACE/claude-repo
+
 # MuleSoft Full Application Review — Master Prompt
 
-You are performing a COMPLETE, READ-ONLY MuleSoft 4 application
-code review.
+You are performing a COMPLETE, READ-ONLY MuleSoft 4 application code review.
 
 Act as a Senior MuleSoft Integration Architect with strong expertise in:
 
@@ -32,96 +33,100 @@ Act as a Senior MuleSoft Integration Architect with strong expertise in:
 
 Before reviewing the application, read and follow:
 
-1. `CLAUDE.md`
-2. `skills/mule-code-review/SKILL.md`
-3. `review.md`
-4. all applicable files under `references/`
-5. `references/review-report-schema.md`, before writing the PHASE 19 JSON
+1. ${REVIEW_KIT_DIR}/CLAUDE.md
+2. ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/SKILL.md
+3. ${REVIEW_KIT_DIR}/review.md
+4. all applicable files under ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/
+5. ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/review-report-schema.md
 
-The files under `references/` contain detailed review rules and finding IDs.
+The files under references/ contain detailed review rules and finding IDs.
 
 Do not ignore those rules.
 
-`CLAUDE.md` defines repository-level behavior.
+CLAUDE.md defines repository-level behavior.
 
-`SKILL.md` defines the review methodology.
+SKILL.md defines the review methodology.
 
-`review.md` defines the full application review and final report structure.
+review.md defines the full application review and final report structure.
 
-`references/*.md` define detailed category-specific review rules.
+references/*.md define detailed category-specific review rules.
 
-## Review kit location
+Read review-report-schema.md before producing PHASE 19.
 
-All review-kit paths in this prompt are relative to the review kit directory.
+Do not guess the structured JSON schema.
 
-If the environment variable `REVIEW_KIT_DIR` is set, resolve them under that
-directory. Otherwise resolve them from the repository root.
+---
 
-The kit files are laid out as follows. `SKILL.md` and every `references/*.md`
-live under `.claude/skills/mule-code-review/`, NOT at the kit root:
+# REVIEW KIT LOCATION
 
-```text
-<kit>/CLAUDE.md
-<kit>/review.md
-<kit>/finding-taxonomy.md
-<kit>/scripts/generate_report.py
-<kit>/.claude/skills/mule-code-review/SKILL.md
-<kit>/.claude/skills/mule-code-review/references/*.md
-```
+The review kit is located at:
 
-So `references/review-report-schema.md` in this prompt means
-`<kit>/.claude/skills/mule-code-review/references/review-report-schema.md`.
+${REVIEW_KIT_DIR}
 
-If a referenced file is not where you expect, locate it before continuing.
-Do not guess the structured JSON schema — read
-`references/review-report-schema.md` first.
+For this review:
 
-The application under review is always the repository root, never the review
-kit directory.
+${REVIEW_KIT_DIR} = $GITHUB_WORKSPACE/claude-repo
+
+The application under review is:
+
+$GITHUB_WORKSPACE
+
+The application under review is ALWAYS the repository root:
+
+$GITHUB_WORKSPACE
+
+The review kit directory is NOT the application under review.
 
 Do not report findings against review-kit files.
+
+The review-kit files are:
+
+${REVIEW_KIT_DIR}/CLAUDE.md
+${REVIEW_KIT_DIR}/review.md
+${REVIEW_KIT_DIR}/finding-taxonomy.md
+${REVIEW_KIT_DIR}/scripts/generate_report.py
+${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/SKILL.md
+${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/*.md
+
+If a referenced file is not where expected, locate it before continuing.
+
+Do not guess paths.
 
 ---
 
 # REQUIRED DELIVERABLE
 
-The review deliverable is ONE timestamped WORD DOCUMENT in the `reports`
-folder of the repository:
+The review deliverable is exactly ONE timestamped Word document in the reports
+folder of the APPLICATION repository:
 
-`reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx`
+reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx
 
-For example:
+The absolute location is:
 
-`reports/CODE_REVIEW_REPORT_20260909-084530.docx`
+$GITHUB_WORKSPACE/reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx
 
-This document MUST be generated at the end of every run of this prompt.
+Example:
+
+reports/CODE_REVIEW_REPORT_20260909-084530.docx
 
 Rules:
 
-- Generate the document in the `reports` folder, not the repository root.
+- Generate the document in $GITHUB_WORKSPACE/reports.
 - Generate exactly ONE document per review run.
-- Do NOT split the review across multiple documents.
-- Do NOT create `CODE_REVIEW_REPORT.md`.
+- Do NOT create CODE_REVIEW_REPORT.md.
 - Do NOT create a findings JSON file.
-- Do NOT create any other report or intermediate file.
+- Do NOT create any other report.
+- Do NOT create an intermediate JSON file.
+- Do NOT create an intermediate Markdown file.
+- Do NOT create any other intermediate report file.
+- Do NOT modify application files.
+- Do NOT construct the timestamp yourself.
+- Do NOT pass --output to the generator.
+- The generator owns the timestamp and filename.
 - The Word document is the ONLY file created by this review.
 
-The timestamp and the file name are produced by the generator. Do not
-construct the file name yourself and do not pass `--output`.
-
-The review is written as a structured JSON object (PHASE 19) and piped
-directly into the report generator shipped with this review kit:
-
-`scripts/generate_report.py`
-
-The generator owns the document structure, section numbering, tables and
-colour coding. It is defined by:
-
-`references/review-report-schema.md`
-
-Full instructions are in PHASE 19 and PHASE 20.
-
-Do not finish the run without producing the Word document.
+Do not finish the review until the Word document actually exists and has been
+verified.
 
 ---
 
@@ -138,7 +143,7 @@ DO NOT:
 - modify secure properties
 - modify API specifications
 - modify MUnit tests
-- modify `pom.xml`
+- modify pom.xml
 - upgrade dependencies
 - refactor code
 - fix defects
@@ -151,10 +156,12 @@ DO NOT:
 - reset files
 - modify Git state
 
-Do not make any application changes during the review.
+The ONLY file that may be created by this review is the generated Word
+document under:
 
-The only file that may be created is the timestamped Word report under
-`reports/`.
+$GITHUB_WORKSPACE/reports/
+
+Creating the required Word report is explicitly permitted.
 
 ---
 
@@ -172,9 +179,7 @@ Do NOT limit the review to:
 - Git diffs
 - modified lines
 
-Unless I explicitly request a Git/diff review.
-
-Review the complete MuleSoft application.
+Unless explicitly requested, review the complete MuleSoft application.
 
 ---
 
@@ -232,8 +237,8 @@ Determine:
 
 Exclude normal generated artifacts from primary review:
 
-- `.git`
-- `target`
+- .git
+- target
 - compiled artifacts
 - IDE metadata
 - temporary files
@@ -251,8 +256,8 @@ Produce an internal understanding of the repository.
 
 Inspect:
 
-- `pom.xml`
-- `mule-artifact.json`
+- pom.xml
+- mule-artifact.json
 - Maven properties
 - Mule Maven Plugin
 - Mule runtime
@@ -323,8 +328,8 @@ Do not report issues simply because a different architecture is possible.
 
 Use:
 
-- `references/mule-architecture.md`
-- `references/mule-xml.md`
+- ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/mule-architecture.md
+- ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/mule-xml.md
 
 Review:
 
@@ -353,8 +358,8 @@ Report only evidence-supported findings.
 
 Use:
 
-- `references/security.md`
-- `references/logger.md`
+- ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/security.md
+- ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/logger.md
 
 Inspect:
 
@@ -391,20 +396,20 @@ Security findings must be evidence-based.
 
 Use:
 
-- `references/error-handling.md`
+${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/error-handling.md
 
 Inspect:
 
 - error types
 - error hierarchy
-- `on-error-propagate`
-- `on-error-continue`
+- on-error-propagate
+- on-error-continue
 - Try scopes
 - global error handlers
 - error mapping
 - HTTP error responses
 - retries
-- `until-successful`
+- until-successful
 - reconnection
 - transactions
 - downstream failures
@@ -427,7 +432,7 @@ Do not assume that a local error handler is the complete error strategy.
 
 Use:
 
-- `references/dataweave.md`
+${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/dataweave.md
 
 Inspect significant DataWeave scripts.
 
@@ -462,7 +467,7 @@ Do not report theoretical performance problems without a reasonable mechanism.
 
 Use:
 
-- `references/api.md`
+${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/api.md
 
 Inspect all API implementations and available:
 
@@ -499,7 +504,7 @@ Only report a breaking API change when repository evidence supports it.
 
 Use:
 
-- `references/connectors.md`
+${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/connectors.md
 
 For every significant connector:
 
@@ -525,7 +530,7 @@ Do not report missing configuration merely because it is not present locally.
 
 Use:
 
-- `references/database.md`
+${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/database.md
 
 Inspect:
 
@@ -556,7 +561,7 @@ supports transactions.
 
 Use:
 
-- `references/messaging.md`
+${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/messaging.md
 
 Inspect:
 
@@ -583,8 +588,8 @@ Determine actual processing semantics from repository evidence.
 
 Use:
 
-- `references/performance.md`
-- `references/dataweave.md`
+- ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/performance.md
+- ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/dataweave.md
 
 Inspect:
 
@@ -619,7 +624,7 @@ Do not recommend parallelization simply because it is technically possible.
 
 Use:
 
-- `references/logger.md`
+${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/logger.md
 
 Review:
 
@@ -642,7 +647,7 @@ from the available logs.
 
 Use:
 
-- `references/munit.md`
+${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/munit.md
 
 Inspect:
 
@@ -669,8 +674,8 @@ Determine whether the test actually verifies expected business behavior.
 
 Use:
 
-- `references/maven.md`
-- `references/mule-xml.md`
+- ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/maven.md
+- ${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/mule-xml.md
 
 Inspect:
 
@@ -878,176 +883,378 @@ and not as Markdown.
 
 The schema is defined by:
 
-`references/review-report-schema.md`
+${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/review-report-schema.md
 
-Read that file before writing the JSON. It gives the exact key names, the
-allowed enum values, and a worked example for every section.
+Read that file before writing the JSON.
 
-The generator in PHASE 20 owns the document structure, the section
-numbering, the tables and the colour coding. Your job is the content.
+The top-level keys are:
 
-Top-level keys, all required:
-
-```text
-application              overall application metadata
-review                   repository, branch, commit
-executiveSummary         narrative
-scope                    statement, included, excluded
-methodology              list of methodology steps
-inventory                review.md section 17 areas
-technologyStack          component / version / evidence / notes
-architectureSummary      narrative
-integrations             review.md section 18 integration boundaries
-findings                 every validated finding
-assessments              the 15 category assessments
-productionReadiness      summary plus the 10 readiness dimensions
-positiveObservations     evidence-backed strengths
-riskSummary              risk themes
-remediationPriorities    ranked top 10
-limitations              what could not be verified
-coverage                 per-phase coverage
-overallRisk              CRITICAL | HIGH | MEDIUM | LOW
-overallRecommendation    APPROVE | APPROVE WITH MINOR CHANGES |
-                         CHANGES REQUIRED | HIGH RISK
-recommendationRationale  narrative
-```
+application
+review
+executiveSummary
+scope
+methodology
+inventory
+technologyStack
+architectureSummary
+integrations
+findings
+assessments
+productionReadiness
+positiveObservations
+riskSummary
+remediationPriorities
+limitations
+coverage
+overallRisk
+overallRecommendation
+recommendationRationale
 
 Content rules:
 
-- Every finding needs `id`, `severity`, `category`, `file`, `location`,
-  `confidence`, `problem`, `evidence`, `impact` and `recommendation`.
-- Use the finding IDs defined by the applicable `references/*.md` rule.
-- Add `evidenceSnippet` with the verbatim repository excerpt whenever a
-  short excerpt proves the finding. It renders as a code block under
-  Evidence and again in Appendix B.
-- Write `severity` and `confidence` in upper case, from the allowed values
-  only. Anything else is excluded from the counts and reported separately.
-- Do not write the severity counts or the category counts. The generator
-  counts them from `findings`, so they cannot disagree with the detail.
-- Use `"Not identified"` where repository evidence does not provide the
-  information. Do not guess and do not omit the key.
-- Narrative strings accept `**bold**` and `` `code` `` inline, and a blank
-  line starts a new paragraph. Do not use Markdown headings, tables, lists
-  or fenced blocks inside a string.
-- Every assessment area and every readiness dimension you did not assess
-  can be omitted; it renders as NOT ASSESSED rather than disappearing.
+- Every finding needs id, severity, category, file, location, confidence,
+  problem, evidence, impact and recommendation.
+- Use the finding IDs defined by the applicable references/*.md rule.
+- Add evidenceSnippet with the verbatim repository excerpt whenever a short
+  excerpt proves the finding.
+- Write severity and confidence in upper case.
+- Use only allowed enum values.
+- Do not write severity counts.
+- Do not write category counts.
+- The generator counts them from findings.
+- Use "Not identified" where repository evidence does not provide the
+  information.
+- Do not guess.
+- Narrative strings accept inline bold and code formatting.
+- Do not use Markdown headings, tables, lists or fenced blocks inside a
+  narrative string.
+- Every assessment area and readiness dimension that was not assessed may be
+  omitted.
 
-State `overallRisk` and `overallRecommendation` honestly. The generator
-floors both against the finding evidence and records any correction in the
-report, so understating a verdict does not hide it.
+State overallRisk and overallRecommendation honestly.
+
+The generator may reconcile the verdict against the finding evidence.
+
+Do not attempt to manipulate or understate the verdict.
 
 ---
 
 # PHASE 20 — WORD DOCUMENT GENERATION
 
-The review deliverable is ONE timestamped Word document in `reports/`.
+THIS PHASE IS MANDATORY.
 
-Generate it by piping the PHASE 19 JSON directly into the generator.
-Do not write the JSON or a Markdown report to a file first.
+You MUST ACTUALLY EXECUTE the report generator.
 
-## Step 1 — Collect the document metadata
+Do NOT merely describe the command.
 
-From repository evidence and Git:
+Do NOT stop after saying:
 
-- application name (`artifactId` / `name` in `pom.xml`)
-- current branch
-- current commit
+"All references read. Now generating the Word report from the structured review JSON."
 
-```bash
-git rev-parse --abbrev-ref HEAD
-git rev-parse --short HEAD
-```
+That statement is NOT evidence that the report was generated.
 
-## Step 2 — Generate the Word document
+The review is NOT complete until the .docx file physically exists.
 
-Run ONE command that pipes the complete JSON into the generator through a
-quoted heredoc. The quoted delimiter keeps `$`, backticks, quotes and
-backslashes literal, so DataWeave, SQL and property expressions inside the
-evidence survive intact.
+## Step 1 — Collect document metadata
 
-`REVIEW_KIT_DIR` is the directory where this review kit is checked out.
-Use `.` when the kit and the application are the same repository.
+Determine the application name from repository evidence, preferably artifactId
+or name in pom.xml.
 
-```bash
-python3 "${REVIEW_KIT_DIR:-.}/scripts/generate_report.py" \
+Execute against the APPLICATION repository:
+
+git -C "$GITHUB_WORKSPACE" rev-parse --abbrev-ref HEAD
+
+git -C "$GITHUB_WORKSPACE" rev-parse --short HEAD
+
+Do not run these commands against the review-kit directory.
+
+---
+
+## Step 2 — Construct the complete PHASE 19 JSON
+
+Construct the COMPLETE PHASE 19 JSON object in memory.
+
+Do NOT write it to a file.
+
+Do NOT create a temporary JSON file.
+
+Do NOT create a Markdown report.
+
+Do NOT create any intermediate report.
+
+The JSON must exactly match the schema in:
+
+${REVIEW_KIT_DIR}/.claude/skills/mule-code-review/references/review-report-schema.md
+
+---
+
+## Step 3 — EXECUTE THE REPORT GENERATOR
+
+You MUST execute the report generator from the application repository.
+
+First:
+
+cd "$GITHUB_WORKSPACE"
+
+Then execute:
+
+python3 "${REVIEW_KIT_DIR}/scripts/generate_report.py" \
   --input - \
   --output-dir reports \
   --app "<application name>" \
   --branch "$(git rev-parse --abbrev-ref HEAD)" \
   --commit "$(git rev-parse --short HEAD)" <<'MULE_REVIEW_EOF'
-{
-  "application": { "name": "<application name>", ... },
-  ...
-  "recommendationRationale": "..."
-}
+<COMPLETE PHASE 19 JSON>
 MULE_REVIEW_EOF
-```
 
-The generator creates the `reports` directory if it does not exist, applies
-the `CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx` name, re-opens the saved
-document to confirm every required section is present, and prints the path
-it wrote along with the reconciled verdict and the finding counts.
+IMPORTANT:
 
-Rules for this step:
+- Actually execute this command.
+- Do not merely print the command.
+- Do not describe the command as if it executed.
+- Do not use --output.
+- Do not construct the timestamp.
+- Do not create an intermediate JSON file.
+- Do not create an intermediate Markdown report.
+- Run the generator exactly once for the successful review run.
+- Pass the COMPLETE JSON.
+- Do not pass a summary or excerpt.
 
-- Run the generator EXACTLY ONCE, producing a single document.
-- Pass the COMPLETE JSON, not a summary or an excerpt.
-- The JSON must be valid. Escape newlines inside strings as `\n`; the
-  generator rejects malformed JSON rather than writing a partial document.
-- Do not pass `--output`; the generator owns the timestamped file name.
-- Keep the `MULE_REVIEW_EOF` delimiter quoted.
-- Never place the delimiter at the start of a JSON line.
-- The generator installs `python-docx` on first use if it is missing.
+The heredoc delimiter MUST be quoted:
 
-If the generator reports a missing section or invalid JSON, fix the JSON and
-run it again. Do not hand-build the document.
+'MULE_REVIEW_EOF'
 
-## Step 3 — Verify the deliverable
+The generator owns:
 
-```bash
-ls -l reports/
-git status --porcelain
-```
-
-Confirm that:
-
-1. Exactly one document was produced by this run, and it is not empty.
-2. It is in `reports/` and its name contains the timestamp.
-3. No `CODE_REVIEW_REPORT.md` or other report file was created.
-4. No application file was modified.
-
-Report the generated file name in the final response.
-
-If the generator fails, report the actual error. Do not claim the document
-was generated when it was not.
+- timestamp
+- filename
+- report structure
+- section numbering
+- tables
+- colour coding
+- finding counts
+- category counts
+- verdict reconciliation
 
 ---
 
-# IMPORTANT FINAL RESPONSE REQUIREMENT
+## Step 4 — VERIFY THE GENERATED DOCUMENT
 
-The timestamped Word document must be generated in `reports/`, and the final
-response must also contain the ACTUAL REVIEW OUTPUT.
+After the generator completes, execute:
 
-Do NOT respond only with:
+cd "$GITHUB_WORKSPACE"
 
-- "Review completed"
-- "I found several issues"
-- "See report"
-- "The report has been generated"
+find reports -maxdepth 1 -type f -name 'CODE_REVIEW_REPORT_*.docx' -print
 
-In the final response, provide:
+ls -lh reports/
 
-1. The generated document path, for example
-   `reports/CODE_REVIEW_REPORT_20260909-084530.docx`.
-2. The finding counts by severity.
-3. The CRITICAL and HIGH findings.
-4. The overall risk and overall recommendation.
+Confirm:
+
+1. A .docx file exists.
+2. It is under $GITHUB_WORKSPACE/reports/.
+3. Its filename matches CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx.
+4. Its size is greater than zero.
+5. Exactly ONE report was generated by this review run.
+6. The generator completed successfully.
+7. The generated file path is captured exactly.
+
+Do NOT claim the report exists unless this verification succeeds.
+
+If the generator does not create the document, PHASE 20 has FAILED.
+
+---
+
+## Step 5 — VERIFY FORBIDDEN FILES
+
+Execute:
+
+cd "$GITHUB_WORKSPACE"
+
+find . -maxdepth 3 -type f \
+  \( -name 'CODE_REVIEW_REPORT.md' \
+     -o -name '*review*.json' \
+     -o -name '*findings*.json' \) \
+  -print
+
+The review must not create these files.
+
+Then execute:
+
+git -C "$GITHUB_WORKSPACE" status --porcelain
+
+Confirm that no application source/configuration/test files were modified.
+
+The only file created by this review must be:
+
+reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx
+
+---
+
+# IMPORTANT EXECUTION BEHAVIOR
+
+When you reach PHASE 20:
+
+DO NOT stop after constructing the JSON.
+
+DO NOT stop after saying:
+
+"All references read. Now generating the Word report from the structured review JSON."
+
+You must:
+
+1. construct the complete JSON;
+2. invoke Bash;
+3. execute generate_report.py;
+4. wait for the command to finish;
+5. verify the .docx exists;
+6. verify the file is non-empty;
+7. capture the exact generated path;
+8. only then produce the final response.
+
+The review is incomplete if any of these steps are skipped.
+
+---
+
+# FAILURE HANDLING
+
+If the generator fails:
+
+- do NOT claim the report was generated;
+- use the actual generator error;
+- do not invent a report filename;
+- do not claim a nonexistent file exists.
+
+If the JSON is invalid:
+
+- correct the JSON;
+- do not create an intermediate JSON file;
+- execute the generator again only to recover from the failure.
+
+If required review-kit files cannot be read, the review is BLOCKED.
+
+If the generator cannot be executed because a required file or dependency is
+unavailable, the review is BLOCKED.
+
+If the review itself identifies material production risks after a completed
+review, the outcome may be FAIL.
+
+---
+
+# OVERALL STATUS RULES
+
+Use exactly one:
+
+PASS
+FAIL
+BLOCKED
+
+Use PASS only when:
+
+- the full review was completed;
+- all required phases were completed or appropriately marked not applicable;
+- PHASE 19 JSON was successfully constructed;
+- PHASE 20 successfully executed;
+- exactly one timestamped .docx exists;
+- the .docx is non-empty;
+- the generated file was verified.
+
+Use FAIL when:
+
+- the review was completed sufficiently to determine an outcome; and
+- material risks or defects make the application unsafe or fail the required
+  review outcome.
+
+Use BLOCKED when:
+
+- required review-kit files cannot be found/read;
+- required repository evidence is unavailable;
+- the schema cannot be read;
+- the generator cannot be executed;
+- or another blocking condition prevents a valid review.
+
+Do not use BLOCKED merely because findings exist.
+
+---
+
+# RECOMMENDATION RULES
+
+Use exactly one:
+
+SAFE_TO_PROCEED
+PROCEED_WITH_CAUTION
+NOT_SAFE
+
+Use SAFE_TO_PROCEED when the validated review supports proceeding without
+material blocking concerns.
+
+Use PROCEED_WITH_CAUTION when meaningful risks exist but the evidence does not
+establish that proceeding is categorically unsafe.
+
+Use NOT_SAFE when CRITICAL/HIGH risks or other material conditions make
+proceeding unsafe.
+
+The recommendation must reflect the validated findings and overall risk.
+
+Do not manipulate the recommendation.
+
+---
+
+# FINAL CHAT OUTPUT
+
+Do NOT print the report contents.
+
+Do NOT print PHASE 19 JSON.
+
+Do NOT print findings.
+
+Do NOT print severity counts.
+
+Do NOT print CRITICAL or HIGH findings.
+
+Do NOT print the executive summary.
+
+Do NOT print explanations.
+
+Do NOT print Markdown.
+
+Do NOT print code fences.
+
+Do NOT print any additional commentary.
+
+Your ENTIRE final response MUST be exactly THREE lines and NOTHING ELSE.
+
+The exact format is:
+
+Overall Status: <PASS | FAIL | BLOCKED>
+Recommendation: <SAFE_TO_PROCEED | PROCEED_WITH_CAUTION | NOT_SAFE>
+Report: reports/<generated-file-name>.docx
+
+For a successful run, replace <generated-file-name> with the EXACT filename
+actually produced and verified by generate_report.py.
+
+Example:
+
+Overall Status: PASS
+Recommendation: PROCEED_WITH_CAUTION
+Report: reports/CODE_REVIEW_REPORT_20260909-153500.docx
+
+If the report was not generated:
+
+Overall Status: BLOCKED
+Recommendation: NOT_SAFE
+Report: NOT_GENERATED
+
+Never invent a report path.
+
+Do not add a fourth line.
+
+Do not add punctuation before or after these three lines.
 
 ---
 
 # FINAL REPORT QUALITY
 
-The final review should distinguish between:
+The review must distinguish between:
 
 - confirmed defects
 - evidence-supported risks
@@ -1063,3 +1270,7 @@ The goal is a production-focused MuleSoft Integration Architecture review,
 not a style audit.
 
 DO NOT MODIFY THE APPLICATION.
+
+The only permitted created file is the timestamped Word document under:
+
+$GITHUB_WORKSPACE/reports/
