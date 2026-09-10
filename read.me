@@ -1,0 +1,1622 @@
+mulesoft-claude-code-review/
+│
+├── .github/
+│   └── workflows/
+│       └── mule-code-review.yml
+│
+├── agents/
+│   └── mule-code-review-agent.md
+│
+├── skills/
+│   └── mule-code-review/
+│       ├── SKILL.md
+│       └── references/
+│           ├── mule-architecture.md
+│           ├── mule-xml.md
+│           ├── dataweave.md
+│           ├── error-handling.md
+│           ├── security.md
+│           ├── api.md
+│           ├── logger.md
+│           ├── connectors.md
+│           ├── database.md
+│           ├── messaging.md
+│           ├── performance.md
+│           ├── munit.md
+│           ├── maven.md
+│           └── configuration.md
+│
+├── prompts/
+│   └── mule-code-review.md
+│
+├── scripts/
+│   ├── discover_application.py
+│   ├── collect_review_evidence.py
+│   ├── validate_review.py
+│   └── generate_report.py
+│
+├── templates/
+│   └── review-report-template.docx
+│
+├── config/
+│   └── review-config.env
+│
+├── CLAUDE.md
+│
+├── references/
+│   └── review-report-schema.md
+│
+├── reports/
+│   └── .gitkeep
+│
+└── README.md
+
+
+============================================================
+RESPONSIBILITY OF EACH COMPONENT
+============================================================
+
+1. .github/workflows/mule-code-review.yml
+   ---------------------------------------------------------
+   GitHub Actions entry point.
+
+   Responsibilities:
+   - Checkout MuleSoft application repository
+   - Checkout this framework repository
+   - Install Claude Code
+   - Prepare environment
+   - Invoke Claude using prompts/mule-code-review.md
+   - Allow Claude to read the repository
+   - Allow Claude to execute approved scripts
+   - Generate the final Word document under reports/
+   - Upload the generated report as a GitHub Actions artifact
+   - Print only the final status/report path
+
+
+2. agents/mule-code-review-agent.md
+   ---------------------------------------------------------
+   Defines the senior MuleSoft review agent.
+
+   Responsibilities:
+   - Establish reviewer role
+   - Define review behavior
+   - Define evidence-first reasoning
+   - Define how the skill should be used
+   - Define how findings are validated
+   - Define how the final review is reconciled
+
+   There is intentionally ONE primary agent.
+
+   We do NOT create multiple agents initially.
+
+   The agent delegates specialized knowledge to the skills/reference
+   files rather than creating separate security/API/DataWeave agents.
+
+
+3. skills/mule-code-review/SKILL.md
+   ---------------------------------------------------------
+   Main MuleSoft code-review skill.
+
+   Responsibilities:
+   - Full application review methodology
+   - Change review methodology
+   - Repository reconnaissance
+   - Cross-file analysis
+   - Mule 4 semantics
+   - Finding validation
+   - Severity
+   - Confidence
+   - Duplicate detection
+   - Architecture
+   - Mule XML
+   - Error handling
+   - DataWeave
+   - API
+   - Security
+   - Logging
+   - Connectors
+   - Database
+   - Messaging
+   - Performance
+   - MUnit
+   - Maven
+   - Configuration
+   - Production readiness
+
+   This is where your existing mule-code-review skill content belongs.
+
+
+4. skills/mule-code-review/references/*.md
+   ---------------------------------------------------------
+   Specialized review knowledge.
+
+   Each file contains detailed rules and finding IDs for one domain.
+
+   mule-architecture.md
+   - Architecture rules
+
+   mule-xml.md
+   - Mule XML rules
+
+   dataweave.md
+   - DataWeave rules
+
+   error-handling.md
+   - Error handling rules
+
+   security.md
+   - Security rules
+
+   api.md
+   - API rules
+
+   logger.md
+   - Logging rules
+
+   connectors.md
+   - Connector rules
+
+   database.md
+   - Database rules
+
+   messaging.md
+   - Messaging rules
+
+   performance.md
+   - Performance rules
+
+   munit.md
+   - MUnit rules
+
+   maven.md
+   - Maven/dependency rules
+
+   configuration.md
+   - Configuration rules
+
+
+5. prompts/mule-code-review.md
+   ---------------------------------------------------------
+   THIS IS THE MAIN EXECUTION PROMPT.
+
+   GitHub Actions passes this prompt to Claude.
+
+   It will define an explicit workflow such as:
+
+   PHASE 1  - Understand execution environment
+   PHASE 2  - Read CLAUDE.md
+   PHASE 3  - Load MuleSoft agent
+   PHASE 4  - Load MuleSoft skill
+   PHASE 5  - Inspect repository
+   PHASE 6  - Run application discovery
+   PHASE 7  - Collect evidence
+   PHASE 8  - Analyze architecture
+   PHASE 9  - Analyze security
+   PHASE 10 - Analyze APIs
+   PHASE 11 - Analyze DataWeave
+   PHASE 12 - Analyze integrations
+   PHASE 13 - Analyze database/messaging
+   PHASE 14 - Analyze error handling
+   PHASE 15 - Analyze performance
+   PHASE 16 - Analyze MUnit
+   PHASE 17 - Analyze Maven/configuration
+   PHASE 18 - Produce structured review JSON
+   PHASE 19 - Validate review JSON
+   PHASE 20 - Generate Word document
+   PHASE 21 - Validate Word document
+   PHASE 22 - Print final status
+
+
+6. scripts/discover_application.py
+   ---------------------------------------------------------
+   Mechanical repository discovery.
+
+   It should collect facts such as:
+
+   - Application name
+   - pom.xml
+   - Mule runtime
+   - Java version
+   - Mule Maven Plugin
+   - Dependencies
+   - Mule XML files
+   - DataWeave files
+   - RAML/OAS
+   - Properties
+   - Secure properties
+   - MUnit tests
+   - Connectors
+   - Database usage
+   - Messaging
+   - HTTP listeners
+   - HTTP requests
+   - Schedulers
+   - Batch
+   - Object Store
+   - Deployment configuration
+
+   It must NOT make review judgments.
+
+   It collects evidence only.
+
+
+7. scripts/collect_review_evidence.py
+   ---------------------------------------------------------
+   Collects structured repository evidence needed by Claude.
+
+   It can identify:
+
+   - Relevant files
+   - Configuration references
+   - Flow relationships
+   - Global configurations
+   - DataWeave references
+   - API references
+   - Test relationships
+   - Dependencies
+   - Potentially relevant code sections
+
+   It must remain read-only.
+
+   It must NOT create findings.
+
+
+8. scripts/validate_review.py
+   ---------------------------------------------------------
+   Validates Claude's structured review JSON.
+
+   Responsibilities:
+
+   - Validate JSON schema
+   - Validate required fields
+   - Validate finding IDs
+   - Validate severity
+   - Validate confidence
+   - Validate categories
+   - Validate evidence
+   - Validate counts
+   - Validate duplicate findings
+   - Validate appendix reconciliation
+   - Validate overall risk
+   - Validate recommendation
+   - Validate production readiness
+   - Reconcile the final verdict
+
+   Claude creates the review.
+   The validator verifies the review.
+
+
+9. scripts/generate_report.py
+   ---------------------------------------------------------
+   Generates the final Microsoft Word document.
+
+   Input:
+       Structured review JSON
+
+   Output:
+       reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx
+
+   Responsibilities:
+
+   - Cover page
+   - Executive summary
+   - Finding cards
+   - Severity colors
+   - Assessment colors
+   - Tables
+   - Evidence blocks
+   - Architecture section
+   - Production readiness
+   - Risk summary
+   - Remediation priorities
+   - Limitations
+   - Appendices
+   - Finding reconciliation
+
+   The generator owns the document formatting.
+
+   Claude should NOT directly construct the Word document.
+
+
+10. templates/review-report-template.docx
+    --------------------------------------------------------
+    Optional Word template for branding.
+
+    Can contain:
+
+    - Company branding
+    - Fonts
+    - Header/footer
+    - Logo
+    - Page numbering
+    - Default styles
+
+    The generator uses this template if required.
+
+
+11. config/review-config.env
+    --------------------------------------------------------
+    Non-secret configuration.
+
+    Example values:
+
+    REVIEW_TYPE=FULL_APPLICATION
+    REPORT_DIRECTORY=reports
+    MAX_REMEDIATION_PRIORITIES=10
+
+    No secrets.
+
+
+12. CLAUDE.md
+    --------------------------------------------------------
+    Repository-level operating instructions for Claude.
+
+    Responsibilities:
+
+    - Read-only rules
+    - Allowed files/directories
+    - Agent usage
+    - Skill usage
+    - Script usage
+    - Evidence rules
+    - No source modification
+    - No Git modification
+    - Report-generation rules
+    - Security rules
+    - Final response rules
+
+    This is the persistent operating contract.
+
+
+13. references/review-report-schema.md
+    --------------------------------------------------------
+    THE DOCUMENT CONTRACT.
+
+    This is where the schema you supplied belongs.
+
+    It defines:
+
+    - Cover page
+    - Executive summary
+    - Findings
+    - Category assessments
+    - Production readiness
+    - Risk summary
+    - Remediation priorities
+    - Limitations
+    - Appendices
+    - Severity colors
+    - Status colors
+    - Finding schema
+    - Reconciliation
+    - Validation requirements
+    - Final document hierarchy
+
+    Your supplied CODE REVIEW DOCUMENT SCHEMA becomes this file.
+
+
+14. reports/
+    ---------------------------------------------------------
+    Final generated Word documents only.
+
+    Example:
+
+    reports/
+    └── CODE_REVIEW_REPORT_20260909-143025.docx
+
+    No intermediate JSON or Markdown report should be stored here.
+
+
+15. README.md
+    ---------------------------------------------------------
+    Framework documentation.
+
+    Should explain:
+
+    - Purpose
+    - Repository structure
+    - How to run locally
+    - How GitHub Actions runs it
+    - Required GitHub secrets
+    - Expected output
+    - Review modes
+    - Report location
+
+
+============================================================
+EXECUTION ARCHITECTURE
+============================================================
+
+                    GitHub Actions
+                           |
+                           v
+              mule-code-review.yml
+                           |
+                           v
+                  Install Claude Code
+                           |
+                           v
+                 prompts/mule-code-review.md
+                           |
+                           v
+                       Claude
+                           |
+             +-------------+-------------+
+             |             |             |
+             v             v             v
+        CLAUDE.md       Agent         Skill
+                           |             |
+                           |             v
+                           |       references/*.md
+                           |
+                           v
+                 Repository Analysis
+                           |
+                           v
+              discover_application.py
+                           |
+                           v
+             collect_review_evidence.py
+                           |
+                           v
+                 Evidence Repository
+                           |
+                           v
+                    Claude Analysis
+                           |
+                           v
+                 Structured Review JSON
+                           |
+                           v
+                  validate_review.py
+                           |
+                           v
+                  Validated Review JSON
+                           |
+                           v
+                  generate_report.py
+                           |
+                           v
+                       reports/
+                           |
+                           v
+              CODE_REVIEW_REPORT_*.docx
+
+
+============================================================
+IMPORTANT DESIGN DECISION
+============================================================
+
+Use ONE AGENT.
+
+Do NOT create:
+
+    security-agent.md
+    api-agent.md
+    dataweave-agent.md
+    performance-agent.md
+    database-agent.md
+    munit-agent.md
+
+Those domains belong in the skill reference files.
+
+The architecture is:
+
+    ONE SENIOR MULESOFT AGENT
+              +
+    ONE MULESOFT CODE REVIEW SKILL
+              +
+    SPECIALIZED REFERENCE FILES
+              +
+    MECHANICAL EVIDENCE SCRIPTS
+              +
+    ONE STRUCTURED REPORT SCHEMA
+              +
+    ONE REPORT GENERATOR
+              +
+    ONE GITHUB ACTION
+
+
+============================================================
+FINAL DATA FLOW
+============================================================
+
+MuleSoft Repository
+        |
+        | read-only
+        v
+Application Discovery
+        |
+        v
+Evidence Collection
+        |
+        v
+Claude MuleSoft Agent
+        |
+        +---- SKILL.md
+        |
+        +---- architecture reference
+        +---- XML reference
+        +---- DataWeave reference
+        +---- error handling reference
+        +---- security reference
+        +---- API reference
+        +---- connector reference
+        +---- database reference
+        +---- messaging reference
+        +---- performance reference
+        +---- MUnit reference
+        +---- Maven reference
+        +---- configuration reference
+        |
+        v
+Structured Review JSON
+        |
+        v
+Validation / Reconciliation
+        |
+        v
+Word Report Generator
+        |
+        v
+reports/CODE_REVIEW_REPORT_<timestamp>.docx
+
+
+============================================================
+FILES WE WILL BUILD IN THIS ORDER
+============================================================
+
+1.  Final project structure                  [CURRENT]
+2.  CLAUDE.md
+3.  agents/mule-code-review-agent.md
+4.  skills/mule-code-review/SKILL.md
+5.  references/review-report-schema.md
+6.  skills/mule-code-review/references/mule-architecture.md
+7.  skills/mule-code-review/references/mule-xml.md
+8.  skills/mule-code-review/references/dataweave.md
+9.  skills/mule-code-review/references/error-handling.md
+10. skills/mule-code-review/references/security.md
+11. skills/mule-code-review/references/api.md
+12. skills/mule-code-review/references/logger.md
+13. skills/mule-code-review/references/connectors.md
+14. skills/mule-code-review/references/database.md
+15. skills/mule-code-review/references/messaging.md
+16. skills/mule-code-review/references/performance.md
+17. skills/mule-code-review/references/munit.md
+18. skills/mule-code-review/references/maven.md
+19. skills/mule-code-review/references/configuration.md
+20. scripts/discover_application.py
+21. scripts/collect_review_evidence.py
+22. scripts/validate_review.py
+23. scripts/generate_report.py
+24. prompts/mule-code-review.md
+25. .github/workflows/mule-code-review.yml
+26. README.md
+
+The structure above is now the baseline. We should not change the
+architecture again while creating the individual files unless there is
+a concrete implementation blocker.
+# MuleSoft Claude Code Review Framework
+
+Evidence-based, production-focused MuleSoft 4 application code review using Claude Code and GitHub Actions.
+
+## 1. Overview
+
+This repository contains a reusable framework for performing senior-level MuleSoft 4 application code reviews.
+
+The framework is designed to:
+
+* run locally or from GitHub Actions
+* review an existing MuleSoft application without modifying it
+* inspect the complete application rather than only changed files
+* analyze Mule XML, DataWeave, APIs, integrations, configuration, dependencies, error handling, messaging, database usage, logging, performance, and MUnit
+* produce evidence-backed findings
+* validate findings and the final risk recommendation
+* generate exactly one Microsoft Word review report per execution
+
+The official review artifact is:
+
+```text
+reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx
+```
+
+No Markdown review report is generated.
+
+---
+
+# 2. Repository Model
+
+The framework uses two logical roots:
+
+```text
+APPLICATION_ROOT/
+    MuleSoft application source
+
+FRAMEWORK_ROOT/
+    review framework
+```
+
+The framework must never assume that the MuleSoft application and framework are located in the same directory.
+
+The scripts resolve their locations using the configured application-root/framework-root model.
+
+A typical GitHub Actions workspace may look like:
+
+```text
+workspace/
+├── application/
+│   ├── pom.xml
+│   ├── src/
+│   └── ...
+│
+└── framework/
+    ├── CLAUDE.md
+    ├── README.md
+    ├── agents/
+    ├── skills/
+    ├── references/
+    ├── scripts/
+    └── reports/
+```
+
+The exact directory names may differ according to the workflow configuration.
+
+The important rule is:
+
+> Application source is the review target. Framework files are the review instructions and execution tooling.
+
+---
+
+# 3. Review Principles
+
+The review follows these principles:
+
+1. Evidence before findings.
+2. Understand the application before judging individual files.
+3. Inspect related configuration and dependencies.
+4. Trace important flows across files.
+5. Consider actual Mule 4 runtime behavior.
+6. Consider integration failure modes.
+7. Be conservative when evidence is incomplete.
+8. Do not invent requirements.
+9. Do not invent runtime behavior.
+10. Do not report unsupported defects.
+11. Do not modify application source.
+12. Do not perform remediation during the review.
+
+The objective is not to maximize the number of findings.
+
+The objective is to produce the most technically defensible production review possible.
+
+---
+
+# 4. Review Coverage
+
+The review assesses applicable areas including:
+
+* Application Architecture
+* Mule XML
+* DataWeave
+* Error Handling
+* Security
+* API Design
+* Logging and Observability
+* Connectors
+* Database
+* Messaging
+* Performance
+* MUnit
+* Maven and Dependencies
+* Configuration
+* Maintainability
+* Production Readiness
+
+Not every application will contain every technology.
+
+The review distinguishes between:
+
+```text
+Not Identified
+Not Assessed
+Not Applicable
+```
+
+These statuses must not be converted into findings without supporting evidence.
+
+---
+
+# 5. Repository Structure
+
+The framework follows this structure:
+
+```text
+.
+├── CLAUDE.md
+├── README.md
+│
+├── agents/
+│   └── mule-code-review-agent.md
+│
+├── skills/
+│   └── mule-code-review/
+│       ├── SKILL.md
+│       └── references/
+│           ├── architecture.md
+│           ├── mule-xml.md
+│           ├── dataweave.md
+│           ├── error-handling.md
+│           ├── security.md
+│           ├── api.md
+│           ├── logger.md
+│           ├── connectors.md
+│           ├── database.md
+│           ├── messaging.md
+│           ├── performance.md
+│           ├── munit.md
+│           ├── maven.md
+│           └── configuration.md
+│
+├── scripts/
+│   ├── discover_application.py
+│   ├── collect_review_evidence.py
+│   ├── validate_review.py
+│   └── generate_report.py
+│
+├── reports/
+│
+└── workspace/
+    └── execution/
+```
+
+The `workspace/execution` directory contains temporary execution artifacts.
+
+The `reports` directory contains the official final Word report.
+
+---
+
+# 6. Execution Model
+
+The review execution follows this sequence:
+
+```text
+1. Determine application root
+2. Determine framework root
+3. Read CLAUDE.md
+4. Read review agent instructions
+5. Read SKILL.md
+6. Read applicable review references
+7. Discover application
+8. Collect repository evidence
+9. Understand architecture
+10. Trace important flows
+11. Perform domain reviews
+12. Validate potential findings
+13. Produce review.json
+14. Validate review.json
+15. Generate Word report
+16. Validate generated report
+17. Confirm exactly one final report
+18. Publish the report
+```
+
+The Claude review agent is responsible for the actual technical analysis.
+
+The Python scripts provide deterministic discovery, evidence collection, validation, and report generation.
+
+---
+
+# 7. Discovery
+
+Run:
+
+```bash
+python3 scripts/discover_application.py
+```
+
+Discovery identifies available repository evidence such as:
+
+* application name
+* runtime
+* Java version
+* Mule Maven Plugin
+* Mule XML
+* DataWeave
+* RAML
+* OpenAPI candidates
+* properties
+* MUnit candidates
+* HTTP listeners
+* HTTP requests
+* database
+* messaging
+* scheduler
+* batch
+* Object Store
+* Salesforce
+
+Discovery is a reconnaissance mechanism.
+
+It is not itself a code-review finding engine.
+
+A detected feature must be inspected before it is treated as evidence of a defect.
+
+The generated artifact is:
+
+```text
+workspace/execution/application-discovery.json
+```
+
+---
+
+# 8. Evidence Collection
+
+Run:
+
+```bash
+python3 scripts/collect_review_evidence.py
+```
+
+Evidence collection records repository material relevant to the review.
+
+Examples include:
+
+* source files
+* line counts
+* security-related signals
+* error-handling constructs
+* logging
+* retry/reconnection
+* transactions
+* database usage
+* messaging
+* API-related constructs
+
+The evidence collector is intentionally conservative.
+
+A detected keyword or configuration pattern is a signal, not proof of a defect.
+
+The Claude review agent must inspect the surrounding implementation and related files before creating a finding.
+
+The generated artifact is:
+
+```text
+workspace/execution/review-evidence.json
+```
+
+---
+
+# 9. Claude Review Agent
+
+The primary agent is:
+
+```text
+agents/mule-code-review-agent.md
+```
+
+There is one primary MuleSoft review agent.
+
+Do not create separate agents for:
+
+* Security
+* API
+* DataWeave
+* Database
+* Messaging
+* Performance
+* MUnit
+
+Those concerns are covered by the review skill and specialized references.
+
+The agent must understand the application before making individual findings.
+
+---
+
+# 10. Agent Decision Sequence
+
+The agent follows this decision sequence for each potential issue:
+
+```text
+Detect signal
+    ↓
+Identify source
+    ↓
+Inspect surrounding implementation
+    ↓
+Inspect referenced configuration
+    ↓
+Inspect related flows
+    ↓
+Inspect DataWeave
+    ↓
+Inspect APIs/contracts
+    ↓
+Inspect dependencies
+    ↓
+Inspect tests
+    ↓
+Check mitigating controls
+    ↓
+Determine actual Mule behavior
+    ↓
+Determine production impact
+    ↓
+Determine severity
+    ↓
+Determine confidence
+    ↓
+Determine precise location
+    ↓
+Determine actionable remediation
+    ↓
+Validate finding
+    ↓
+Report only if substantiated
+```
+
+If the issue cannot be substantiated:
+
+```text
+DO NOT REPORT IT
+```
+
+---
+
+# 11. Finding Requirements
+
+Every material finding must contain:
+
+```text
+id
+severity
+category
+title
+location
+confidence
+problem
+evidence
+impact
+recommendation
+```
+
+An evidence excerpt may also be included when useful.
+
+Allowed severities:
+
+```text
+CRITICAL
+HIGH
+MEDIUM
+LOW
+NIT
+```
+
+Allowed confidence:
+
+```text
+HIGH
+MEDIUM
+LOW
+```
+
+Findings must identify actual repository material.
+
+Do not fabricate:
+
+* source code
+* line numbers
+* configuration
+* API behavior
+* runtime behavior
+* requirements
+* operational assumptions
+
+---
+
+# 12. Severity Rules
+
+## CRITICAL
+
+Examples:
+
+* exposed secrets
+* severe authorization bypass
+* severe TLS weakness
+* likely data loss
+* likely data corruption
+* catastrophic production failure
+
+## HIGH
+
+Examples:
+
+* major security issue
+* message loss
+* duplicate processing
+* API breakage
+* severe error handling defect
+* unsafe retry
+* transaction defect
+* severe reliability issue
+* severe performance issue
+
+## MEDIUM
+
+Examples:
+
+* meaningful functional defect
+* realistic edge-case failure
+* important testing gap
+* moderate performance issue
+* production-impacting configuration problem
+
+## LOW
+
+Examples:
+
+* limited production risk
+* minor operational issue
+* lower-priority improvement
+
+## NIT
+
+Optional improvement with negligible production risk.
+
+Severity must be supported by evidence and actual impact.
+
+---
+
+# 13. Security
+
+Security findings must never expose secret values.
+
+The review may identify the presence of:
+
+* passwords
+* API keys
+* client secrets
+* access tokens
+* private keys
+* authorization headers
+* connection credentials
+
+but must never print the actual value in the review report.
+
+Evidence should be masked where necessary.
+
+---
+
+# 14. Final Verdict
+
+The final verdict is reconciled against the findings.
+
+Minimum rules:
+
+| Findings        | Minimum Risk | Minimum Recommendation     |
+| --------------- | ------------ | -------------------------- |
+| Any CRITICAL    | CRITICAL     | HIGH RISK                  |
+| Any HIGH        | HIGH         | CHANGES REQUIRED           |
+| Any MEDIUM      | MEDIUM       | CHANGES REQUIRED           |
+| LOW or NIT only | LOW          | APPROVE WITH MINOR CHANGES |
+| No findings     | LOW          | APPROVE                    |
+
+A more severe recommendation is allowed.
+
+A less severe recommendation is not allowed.
+
+If the original verdict is less severe than the evidence-supported minimum, validation raises the verdict and records the reconciliation.
+
+---
+
+# 15. Review JSON
+
+The Claude review agent produces:
+
+```text
+workspace/execution/review.json
+```
+
+This is the structured review input to the deterministic validation stage.
+
+It must contain the findings and overall assessment required by the report schema.
+
+The structured review is an execution artifact.
+
+The official review artifact remains the generated Word document.
+
+---
+
+# 16. Validation
+
+Run:
+
+```bash
+python3 scripts/validate_review.py
+```
+
+Validation checks:
+
+* review JSON exists
+* JSON is valid
+* findings is an array
+* required finding fields exist
+* finding IDs are unique
+* severities are valid
+* confidence values are valid
+* verdict is reconciled
+* finding counts are calculated
+
+The validated artifact is:
+
+```text
+workspace/execution/validated-review.json
+```
+
+Validation must fail the workflow when the structured review is invalid.
+
+---
+
+# 17. Word Report Generation
+
+Run:
+
+```bash
+python3 scripts/generate_report.py
+```
+
+The report generator is the only component responsible for constructing the Word document.
+
+Claude must not manually construct the `.docx` file.
+
+The generator owns:
+
+* formatting
+* headings
+* tables
+* severity colors
+* status banners
+* finding cards
+* evidence presentation
+* page structure
+* headers
+* footers
+* report filename
+
+The final report is:
+
+```text
+reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx
+```
+
+---
+
+# 18. Report Structure
+
+The Word report contains:
+
+```text
+CODE REVIEW REPORT
+
+1. EXECUTIVE SUMMARY
+2. APPLICATION INVENTORY
+3. FINDINGS
+4. CATEGORY ASSESSMENTS
+5. PRODUCTION READINESS ASSESSMENT
+6. RISK AND RECOMMENDATION
+
+APPENDIX A — COMPLETE FINDINGS INVENTORY
+APPENDIX B — FINDING EVIDENCE DETAIL
+APPENDIX C — REVIEW COVERAGE AND BOUNDARIES
+```
+
+The report schema is defined by:
+
+```text
+references/review-report-schema.md
+```
+
+Required sections must not be silently omitted.
+
+---
+
+# 19. Report Validation
+
+After generation, the workflow validates the final report.
+
+Validation should confirm:
+
+* the Word document exists
+* the required report sections exist
+* finding counts reconcile
+* finding appendix reconciles
+* severity classifications reconcile
+* final verdict reconciles
+* review limitations are documented
+* review coverage is documented
+* exactly one final Word report exists
+
+---
+
+# 20. Read-Only Protection
+
+The MuleSoft application is strictly read-only.
+
+The review must never:
+
+* modify Mule XML
+* modify DataWeave
+* modify properties
+* modify secure properties
+* modify API specifications
+* modify MUnit tests
+* modify `pom.xml`
+* modify dependencies
+* modify deployment configuration
+* create implementation files
+* commit changes
+* push changes
+* checkout another branch
+* reset the repository
+* delete files
+* rename files
+
+Temporary execution artifacts may be created only in the framework execution area.
+
+---
+
+# 21. GitHub Actions
+
+The framework is intended to run on a Linux GitHub Actions runner.
+
+The workflow should:
+
+1. check out the framework
+2. obtain or check out the MuleSoft application
+3. establish `APPLICATION_ROOT`
+4. establish `FRAMEWORK_ROOT`
+5. install required Python dependencies
+6. execute discovery
+7. execute evidence collection
+8. invoke Claude Code
+9. validate the structured review
+10. generate the Word report
+11. validate the generated report
+12. upload the final Word document as a workflow artifact
+
+Python commands should use:
+
+```bash
+python3
+```
+
+The workflow must not assume:
+
+```text
+python
+```
+
+is available as the Python 3 interpreter.
+
+---
+
+# 22. Recommended Environment Variables
+
+The execution model may provide:
+
+```text
+APPLICATION_ROOT
+FRAMEWORK_ROOT
+REVIEW_TYPE
+```
+
+Where:
+
+```text
+APPLICATION_ROOT
+```
+
+is the absolute or workflow-resolved path to the MuleSoft application.
+
+```text
+FRAMEWORK_ROOT
+```
+
+is the absolute or workflow-resolved path to this review framework.
+
+```text
+REVIEW_TYPE
+```
+
+defaults to:
+
+```text
+FULL_APPLICATION
+```
+
+when not explicitly provided.
+
+The application root must be treated as the source under review.
+
+The framework root must be treated as tooling and instructions.
+
+---
+
+# 23. Python Dependencies
+
+The report generator requires:
+
+```text
+python-docx
+```
+
+A GitHub Actions setup can install it with:
+
+```bash
+python3 -m pip install python-docx
+```
+
+A project-specific dependency file may also be used if the workflow provides one.
+
+---
+
+# 24. Local Execution
+
+For local execution, establish the two roots and execute the framework scripts from the framework root.
+
+Example:
+
+```bash
+export APPLICATION_ROOT="/path/to/mulesoft-application"
+export FRAMEWORK_ROOT="/path/to/mule-code-review-framework"
+export REVIEW_TYPE="FULL_APPLICATION"
+```
+
+Then:
+
+```bash
+cd "$FRAMEWORK_ROOT"
+
+python3 scripts/discover_application.py
+python3 scripts/collect_review_evidence.py
+```
+
+Run the Claude review according to the configured Claude Code execution method.
+
+Then:
+
+```bash
+python3 scripts/validate_review.py
+python3 scripts/generate_report.py
+```
+
+The final report will be created under:
+
+```text
+$FRAMEWORK_ROOT/reports/
+```
+
+---
+
+# 25. Review Limitations
+
+The review is repository-evidence based.
+
+The agent must document limitations where repository evidence is unavailable.
+
+Examples include:
+
+* runtime metrics unavailable
+* production traffic unavailable
+* external system configuration unavailable
+* deployment environment unavailable
+* secrets intentionally unavailable
+* external API behavior unavailable
+* operational runbooks unavailable
+* infrastructure configuration outside repository scope
+
+Unavailable evidence must not be treated as proof of a defect.
+
+---
+
+# 26. Performance Review
+
+Performance findings must identify a credible mechanism.
+
+The review distinguishes:
+
+```text
+CONFIRMED
+MECHANISM-BASED RISK
+SPECULATIVE
+```
+
+Speculative performance concerns must not be reported as confirmed defects.
+
+Examples of evidence-based mechanisms include:
+
+* N+1 database access
+* N+1 external calls
+* unbounded result retrieval
+* large payload materialization
+* excessive payload copies
+* blocking processing
+* excessive retries
+* excessive logging
+* sequential processing where repository behavior demonstrates production impact
+
+---
+
+# 27. Messaging Review
+
+Messaging behavior must be evaluated using repository evidence.
+
+Review:
+
+* acknowledgement
+* redelivery
+* duplicate processing
+* idempotency
+* retries
+* dead-letter behavior
+* poison messages
+* ordering
+* transactions
+* acknowledgement boundaries
+
+Never assume exactly-once processing without evidence.
+
+---
+
+# 28. API Review
+
+Where an API specification is available, compare implementation behavior against the visible contract.
+
+Review:
+
+* methods
+* request validation
+* response schemas
+* status codes
+* headers
+* content types
+* authentication
+* authorization
+* error contracts
+* timeout
+* retry
+* idempotency
+* backward compatibility
+
+Compatibility findings require visible repository evidence.
+
+---
+
+# 29. Dependency Review
+
+Review:
+
+* Mule runtime
+* Java
+* Mule Maven Plugin
+* connector versions
+* dependency versions
+* duplicate dependencies
+* unnecessary dependencies
+* plugin configuration
+* compatibility
+* dependency conflicts
+
+Do not recommend upgrades merely because newer versions exist.
+
+A dependency finding requires an identifiable technical or compatibility concern.
+
+---
+
+# 30. Positive Observations
+
+The report may include meaningful strengths supported by evidence.
+
+Examples include:
+
+* effective secure property usage
+* appropriate error taxonomy
+* strong API contract alignment
+* effective retry behavior
+* idempotency controls
+* appropriate streaming
+* clean flow separation
+* useful operational logging
+* strong MUnit assertions
+
+Generic praise should not be included.
+
+---
+
+# 31. Failure Conditions
+
+The workflow should fail when:
+
+* discovery fails
+* evidence collection fails
+* Claude review execution fails
+* `review.json` is missing
+* review JSON is invalid
+* required finding fields are missing
+* duplicate finding IDs exist
+* invalid severities exist
+* invalid confidence values exist
+* verdict reconciliation cannot be completed
+* report generation fails
+* generated report validation fails
+* more than one final report is present
+
+A failed review must not be represented as a successful code review.
+
+---
+
+# 32. GitHub Actions Result
+
+The final GitHub Actions review response should be concise.
+
+Expected format:
+
+```text
+Overall Status: <PASS | FAIL | BLOCKED>
+Recommendation: <APPROVE | APPROVE WITH MINOR CHANGES | CHANGES REQUIRED | HIGH RISK>
+Report: reports/<generated-file-name>.docx
+```
+
+The Word report is the official review artifact.
+
+---
+
+# 33. Security of Execution Artifacts
+
+Execution artifacts may contain repository-derived information.
+
+Do not expose secrets in:
+
+* workflow logs
+* Claude prompts
+* evidence files
+* review JSON
+* Word reports
+* GitHub Actions output
+
+If a secret is detected, describe its presence without printing its value.
+
+Use masking where evidence requires demonstrating the issue.
+
+---
+
+# 34. Final Quality Standard
+
+A completed review must be:
+
+* evidence-based
+* technically defensible
+* production-focused
+* cross-file aware
+* Mule-runtime aware
+* conservative with incomplete evidence
+* read-only
+* validated
+* internally reconciled
+* professionally documented
+
+The final Word document must accurately represent the validated review.
+
+The framework should prefer:
+
+> fewer defensible findings over many speculative findings.
+
+---
+
+# 35. Final Artifact
+
+A successful execution produces exactly one official report:
+
+```text
+reports/CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx
+```
+
+That document is the authoritative output of the MuleSoft code review.
