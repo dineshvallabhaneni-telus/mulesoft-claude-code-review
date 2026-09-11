@@ -799,42 +799,74 @@ the same underlying cause.
 
 ---
 
-# PHASE 19 — FINAL REVIEW REPORT
+# PHASE 19 — FINAL REPORT CREATION
 
-This phase MUST produce the final report file.
+This is the final and mandatory phase.
 
-The review is NOT complete until the file exists on disk.
+DO NOT RESPOND TO THE USER YET.
 
-Create exactly this file:
+You MUST first create the complete final review report.
 
-CODE_REVIEW_REPORT.md
+The report MUST be created at:
 
-Create it at the repository root:
+$GITHUB_WORKSPACE/CODE_REVIEW_REPORT.md
 
-${{ github.workspace }}/CODE_REVIEW_REPORT.md
+The file must contain the COMPLETE review output based on all findings,
+evidence, analysis, and conclusions from Phases 1–18.
 
-Before creating the file:
+The report MUST NOT be:
 
-1. Compile all validated findings from Phases 1–18.
-2. Compile the application inventory.
-3. Compile the architecture assessment.
-4. Compile the technology stack.
-5. Compile all category assessments.
-6. Compile the risk assessment.
-7. Compile the remediation priorities.
-8. Compile the positive observations.
-9. Compile the review limitations.
-10. Compile the overall recommendation.
+- a summary of the review
+- a placeholder
+- an outline
+- a statement that the report will be created
+- a partial report
+- a report containing only findings
 
-Product the final review according to 'review.md'
+It must contain the complete final report defined in the
+"FINAL REPORT" section above.
 
-Write the COMPLETE final review to:
+---
 
-${{ github.workspace }}/CODE_REVIEW_REPORT.md
+## MANDATORY EXECUTION ORDER
 
-The file must contain the actual review content, not a placeholder.
+Perform these steps in EXACTLY this order:
 
-The report MUST contain:
+### STEP 1 — Compile the final report
+
+Use all validated information from Phases 1–18.
+
+Do not invent information.
+
+Do not omit validated findings.
+
+Do not include speculative findings.
+
+Construct the complete final report.
+
+### STEP 2 — Create the file
+
+Use the Write tool to create:
+
+$GITHUB_WORKSPACE/CODE_REVIEW_REPORT.md
+
+Write the COMPLETE report into this file.
+
+Do NOT merely output the report in your response.
+
+The report MUST physically exist as:
+
+$GITHUB_WORKSPACE/CODE_REVIEW_REPORT.md
+
+### STEP 3 — Verify the file
+
+After writing the file, use the Read tool to read:
+
+$GITHUB_WORKSPACE/CODE_REVIEW_REPORT.md
+
+Verify that the file contains the complete report.
+
+Confirm that the report contains all required sections:
 
 1. Executive Summary
 2. Review Scope
@@ -870,41 +902,85 @@ The report MUST contain:
 32. Overall Risk
 33. Overall Recommendation
 
-Use the validated findings from Phases 1–18.
+### STEP 4 — Validate completeness
 
-Do not invent findings.
+Do not respond yet.
 
-Do not include speculative findings.
+Verify:
 
-Do not modify application source code.
+- $GITHUB_WORKSPACE/CODE_REVIEW_REPORT.md exists
+- the file is not empty
+- the file contains the actual review
+- the file contains the validated findings
+- the file contains the evidence
+- the file contains recommendations
+- all required report sections are present
 
-The ONLY file you may create is:
+If anything is missing:
 
-${{ github.workspace }}/CODE_REVIEW_REPORT.md
+1. Fix the report.
+2. Write the corrected report.
+3. Read the corrected report again.
+4. Validate it again.
 
-After writing the file, verify that it exists.
+Repeat until the report is complete.
 
-Run an appropriate file existence check, for example:
+### STEP 5 — ONLY NOW RESPOND
 
-test -f ${{ github.workspace }}/CODE_REVIEW_REPORT.md
+You may respond to the user ONLY after:
 
-Then verify that the file is non-empty.
+- $GITHUB_WORKSPACE/CODE_REVIEW_REPORT.md has been created
+- the complete report has been written
+- the report has been read back
+- the report has been verified as complete
 
-For example:
+Your final response must NOT contain the full report.
 
-test -s ${{ github.workspace }}/CODE_REVIEW_REPORT.md
+Your final response must be concise and confirm:
 
-If either check fails, the review is NOT complete.
+- the review is complete
+- the report was successfully created
+- the exact file path
+- finding counts by severity
+- overall risk
+- overall recommendation
 
-If the file cannot be created, explain the exact reason in the final response.
+Example:
 
-Do NOT claim that the review is complete unless:
+Review completed successfully.
 
-${{ github.workspace }}/CODE_REVIEW_REPORT.md
+Report created and verified:
 
-exists and contains the complete final report.
+$GITHUB_WORKSPACE/CODE_REVIEW_REPORT.md
 
----
+Findings:
+- Critical: X
+- High: X
+- Medium: X
+- Low: X
+
+Overall Risk: HIGH
+
+Overall Recommendation: ...
+
+IMPORTANT:
+
+NEVER respond with messages such as:
+
+- "Writing the final report."
+- "I am writing the report."
+- "All phases complete."
+- "The report will be created."
+- "See the report."
+- "Review completed."
+
+unless $GITHUB_WORKSPACE/CODE_REVIEW_REPORT.md has already been created, populated
+with the COMPLETE report, read back, and verified.
+
+The final response is the LAST action.
+
+FILE CREATION AND VERIFICATION MUST HAPPEN BEFORE THE FINAL RESPONSE.
+
 
 # FINAL RESPONSE
 
