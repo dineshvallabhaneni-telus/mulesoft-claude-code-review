@@ -27,10 +27,13 @@ Act as a Senior MuleSoft Integration Architect with strong expertise in:
 - production operations
 
 ---
-
+# Project Location:
+Mulesoft Repository = ${{ github.workspace }}
+Unable to get access the location ${{ github.workspace }} exit and throw error
+---
 # GOVERNING INSTRUCTIONS
 
-Before reviewing the application, read and follow:
+Before reviewing the application, read and follow: All Claude related .md files are located at ${{ github.workspace }}/.mule-code-review folder
 
 1. `CLAUDE.md`
 2. `skills/mule-code-review/SKILL.md`
@@ -796,11 +799,42 @@ the same underlying cause.
 
 ---
 
-# PHASE 19 — FINAL REPORT
+# PHASE 19 — FINAL REVIEW REPORT
 
-Produce the final review according to `review.md`.
+This phase MUST produce the final report file.
 
-The final report must contain:
+The review is NOT complete until the file exists on disk.
+
+Create exactly this file:
+
+CODE_REVIEW_REPORT.md
+
+Create it at the repository root:
+
+${{ github.workspace }}/CODE_REVIEW_REPORT.md
+
+Before creating the file:
+
+1. Compile all validated findings from Phases 1–18.
+2. Compile the application inventory.
+3. Compile the architecture assessment.
+4. Compile the technology stack.
+5. Compile all category assessments.
+6. Compile the risk assessment.
+7. Compile the remediation priorities.
+8. Compile the positive observations.
+9. Compile the review limitations.
+10. Compile the overall recommendation.
+
+Product the final review according to 'review.md'
+
+Write the COMPLETE final review to:
+
+${{ github.workspace }}/CODE_REVIEW_REPORT.md
+
+The file must contain the actual review content, not a placeholder.
+
+The report MUST contain:
 
 1. Executive Summary
 2. Review Scope
@@ -835,6 +869,76 @@ The final report must contain:
 31. Review Limitations
 32. Overall Risk
 33. Overall Recommendation
+
+Use the validated findings from Phases 1–18.
+
+Do not invent findings.
+
+Do not include speculative findings.
+
+Do not modify application source code.
+
+The ONLY file you may create is:
+
+${{ github.workspace }}/CODE_REVIEW_REPORT.md
+
+After writing the file, verify that it exists.
+
+Run an appropriate file existence check, for example:
+
+test -f ${{ github.workspace }}/CODE_REVIEW_REPORT.md
+
+Then verify that the file is non-empty.
+
+For example:
+
+test -s ${{ github.workspace }}/CODE_REVIEW_REPORT.md
+
+If either check fails, the review is NOT complete.
+
+If the file cannot be created, explain the exact reason in the final response.
+
+Do NOT claim that the review is complete unless:
+
+${{ github.workspace }}/CODE_REVIEW_REPORT.md
+
+exists and contains the complete final report.
+
+---
+
+# FINAL RESPONSE
+
+After successfully creating and verifying the file, the final response MUST:
+
+1. State that the review is complete.
+2. State that the report was created.
+3. Provide the exact absolute path to the report.
+4. Provide a concise summary of the major findings.
+5. Include the actual review output summary.
+
+Example:
+
+Review completed.
+
+Report created:
+
+/absolute/path/to/CODE_REVIEW_REPORT.md
+
+The report contains the complete validated MuleSoft application review.
+
+Summary:
+- Critical: X
+- High: X
+- Medium: X
+- Low: X
+- Overall Risk: <rating>
+
+Top risks:
+- ...
+- ...
+- ...
+
+Do NOT respond only with "Review completed" or "See report".
 
 ---
 
