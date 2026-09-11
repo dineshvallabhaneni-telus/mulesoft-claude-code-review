@@ -24,15 +24,15 @@ Execution model:
 
 Input:
 
-    <framework-root>/workspace/execution/validated-review.json
+    $APPLICATION_ROOT/workspace/execution/validated-review.json
 
 Optional template:
 
-    <framework-root>/templates/review-report-template.docx
+    $APPLICATION_ROOT/templates/review-report-template.docx
 
 Output:
 
-    <framework-root>/reports/
+    $APPLICATION_ROOT/reports/
         CODE_REVIEW_REPORT_<YYYYMMDD-HHMMSS>.docx
 
 The MuleSoft application is treated as read-only.

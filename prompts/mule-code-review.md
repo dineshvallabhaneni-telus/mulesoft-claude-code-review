@@ -4,7 +4,13 @@ You are executing a production-focused MuleSoft 4 application code review using 
 
 You are operating in a Linux GitHub Actions environment.
 
-The review is strictly read-only against the MuleSoft application source.
+The MuleSoft application source is strictly read-only.
+
+The review framework is also strictly read-only.
+
+The ONLY file Claude is authorized to create or modify is:
+
+$APPLICATION_ROOT/workspace/execution/review.json
 
 ---
 
@@ -12,84 +18,111 @@ The review is strictly read-only against the MuleSoft application source.
 
 The workflow provides these environment variables:
 
-```text
 APPLICATION_ROOT
 REVIEW_KIT_ROOT
 REVIEW_TYPE
-```
 
 Definitions:
 
-```text
-APPLICATION_ROOT = root directory of the MuleSoft application being reviewed.
-APPLICATION_ROOT = ${{ github.workspace }}
-
-
-REVIEW_KIT_ROOT = root directory of the MuleSoft code review framework.
-REVIEW_KIT_ROOT = ${{ github.workspace }}/.mule-code-review-kit
-
-REVIEW_TYPE = review mode, normally FULL_APPLICATION.
-```
-
-The application and review framework are separate locations.
-
-For this execution:
-
-```text
 APPLICATION_ROOT
-    = MuleSoft application
+    Root directory of the MuleSoft application being reviewed.
 
 REVIEW_KIT_ROOT
-    = review framework
-```
+    Root directory of the MuleSoft code review framework.
 
-Do not confuse the two locations.
+REVIEW_TYPE
+    Review mode. Normally FULL_APPLICATION.
 
-Before beginning the review, verify that both directories exist.
+In the GitHub Actions workflow these resolve to:
+
+APPLICATION_ROOT=$GITHUB_WORKSPACE
+
+REVIEW_KIT_ROOT=$GITHUB_WORKSPACE/.mule-code-review-kit
+
+The application and framework are separate directories.
+
+The application is:
+
+$APPLICATION_ROOT
+
+The framework is:
+
+$REVIEW_KIT_ROOT
+
+NEVER treat the framework repository as the application being reviewed.
 
 ---
 
-# 2. MANDATORY OUTPUT
+# 2. IMPORTANT GITHUB ACTIONS EXECUTION RULE
 
-You MUST physically create exactly this file:
+Each GitHub Actions run step executes in a new shell process.
 
-```text
+Shell variables, aliases, functions, cd state, and other shell state do NOT persist between workflow steps unless explicitly written to GitHub Actions environment/state mechanisms.
+
+However, files created inside $GITHUB_WORKSPACE DO persist between workflow steps.
+
+Therefore:
+
+- Do not rely on shell variables created by a previous workflow step.
+- Use APPLICATION_ROOT and REVIEW_KIT_ROOT supplied by the current workflow.
+- Do not assume the current working directory is unchanged from a previous step.
+- Always use absolute paths for important review artifacts.
+- Files created under $APPLICATION_ROOT/workspace/execution/ remain available to subsequent workflow steps.
+- The review.json file MUST be created physically on disk.
+
+The review is NOT complete merely because JSON was printed to the Claude response.
+
+---
+
+# 3. MANDATORY OUTPUT
+
+You MUST physically create exactly one structured review file:
+
 $APPLICATION_ROOT/workspace/execution/review.json
-```
 
-This is the only structured review artifact Claude is responsible for creating.
+This is the ONLY structured review artifact Claude is responsible for creating.
 
-Do not create:
+Do NOT create:
 
-```text
 review-summary.md
 findings.json
 findings.md
 CODE_REVIEW_REPORT.md
 review-report.json
+review.txt
+review.yaml
+review.yml
 any other review JSON
 any other report artifact
-```
 
-The final Microsoft Word report will be generated later by the framework.
+Do NOT create the Word report.
 
-Do not manually generate the Word document.
+Do NOT create a .docx.
 
-Do not create the Word document yourself.
+The workflow will validate:
+
+$APPLICATION_ROOT/workspace/execution/review.json
+
+and the framework will generate the final Word report later.
 
 ---
 
-# 3. FRAMEWORK FILES
+# 4. EXECUTION ROOT VALIDATION
 
-The review framework is located at:
+Before beginning the review, verify that:
 
-```text
+$APPLICATION_ROOT
+
+exists and is a directory.
+
+Verify that:
+
 $REVIEW_KIT_ROOT
-```
 
-Read the following files before reviewing the application:
+exists and is a directory.
 
-```text
+Verify these framework files exist:
+
 $REVIEW_KIT_ROOT/CLAUDE.md
 
 $REVIEW_KIT_ROOT/agents/mule-code-review-agent.md
@@ -97,139 +130,153 @@ $REVIEW_KIT_ROOT/agents/mule-code-review-agent.md
 $REVIEW_KIT_ROOT/skills/mule-code-review/SKILL.md
 
 $REVIEW_KIT_ROOT/references/review-report-schema.md
-```
 
-Then inspect the applicable specialized references under:
+Verify these application evidence files exist:
 
-```text
+$APPLICATION_ROOT/workspace/execution/application-discovery.json
+
+$APPLICATION_ROOT/workspace/execution/review-evidence.json
+
+If a required file is missing, do not fabricate it.
+
+If an expected evidence file is missing, record the limitation and continue only if the review can reasonably proceed.
+
+---
+
+# 5. FRAMEWORK INSTRUCTIONS
+
+Read:
+
+$REVIEW_KIT_ROOT/CLAUDE.md
+
+$REVIEW_KIT_ROOT/agents/mule-code-review-agent.md
+
+$REVIEW_KIT_ROOT/skills/mule-code-review/SKILL.md
+
+$REVIEW_KIT_ROOT/references/review-report-schema.md
+
+Then inspect applicable specialized references under:
+
 $REVIEW_KIT_ROOT/skills/mule-code-review/references/
-```
 
-Use the actual framework files as the authoritative review instructions.
+Use the actual framework files as authoritative.
 
 A reference rule is a detection criterion.
 
 A reference rule is NOT automatic proof of a defect.
 
+The report schema is authoritative for the structure of review.json.
+
 ---
 
-# 4. APPLICATION LOCATION
+# 6. APPLICATION LOCATION
 
-The MuleSoft application being reviewed is located at:
+The MuleSoft application is:
 
-```text
 $APPLICATION_ROOT
-```
 
-All application source inspection must be performed under this directory.
+All source inspection must be performed against the application under this directory.
 
-Inspect the actual application source.
+The review framework is:
 
-Do not review the framework itself as if it were the MuleSoft application.
+$REVIEW_KIT_ROOT
 
-The framework provides the review methodology.
+The framework is NOT the application.
 
-The application provides the evidence.
+Do not report framework files as application findings.
+
+Do not inspect the framework as though it were MuleSoft application source.
 
 ---
 
-# 5. DISCOVERY AND EVIDENCE
+# 7. DISCOVERY AND EVIDENCE
 
-Before performing detailed review work, inspect:
+Inspect:
 
-```text
 $APPLICATION_ROOT/workspace/execution/application-discovery.json
 
 $APPLICATION_ROOT/workspace/execution/review-evidence.json
-```
 
-These files provide reconnaissance and evidence signals.
+These files are reconnaissance and evidence aids.
 
-They do not replace direct source inspection.
+They do NOT replace direct inspection of the application.
 
 Keyword matches are signals only.
 
-Never create a finding solely because a keyword appears in discovery or evidence output.
+Never create a finding solely because a keyword appears in discovery or evidence.
 
-Always inspect the actual application source before reporting a finding.
+Always inspect the underlying application source before reporting a finding.
 
 ---
 
-# 6. REQUIRED REVIEW SEQUENCE
+# 8. REQUIRED REVIEW SEQUENCE
 
-Perform the review in this order.
+Perform the review using the following sequence.
 
 ## Step 1 — Verify execution roots
 
 Verify:
 
-```text
 $APPLICATION_ROOT
 
 $REVIEW_KIT_ROOT
-```
 
-exist.
+Verify required framework instructions.
 
-Verify the required framework files exist.
-
-Verify discovery and evidence files exist where expected.
+Verify discovery and evidence files where expected.
 
 ---
 
-## Step 2 — Understand the application
+## Step 2 — Understand repository structure
 
-Inspect the repository structure.
+Inspect the application repository structure.
 
 Identify, where present:
 
-* application name
-* Mule runtime
-* Java version
-* Maven configuration
-* Mule Maven Plugin
-* connector dependencies
-* Mule XML
-* DataWeave
-* API specifications
-* properties
-* secure properties
-* MUnit tests
-* deployment configuration
-* HTTP listeners
-* HTTP requests
-* database access
-* messaging
-* Salesforce
-* batch
-* schedulers
-* Object Store
-* logging
-* external integrations
+- Mule application files
+- Mule XML
+- DataWeave
+- RAML
+- OpenAPI
+- properties
+- secure properties
+- pom.xml
+- MUnit tests
+- deployment configuration
+- HTTP listeners
+- HTTP requests
+- database access
+- messaging
+- Salesforce
+- batch
+- schedulers
+- Object Store
+- logging
+- external integrations
 
 Do not assume a component exists.
 
 ---
 
-## Step 3 — Understand architecture
+## Step 3 — Understand application architecture
 
-Understand the application before judging individual files.
+Understand the architecture before judging individual implementation details.
 
 Inspect:
 
-* main flows
-* private flows
-* subflows
-* flow references
-* orchestration
-* reusable components
-* synchronous dependencies
-* asynchronous processing
-* side effects
-* transaction boundaries
-* coupling
-* duplicated logic
-* testability
+- main flows
+- private flows
+- subflows
+- flow references
+- reusable components
+- orchestration
+- synchronous dependencies
+- asynchronous processing
+- side effects
+- transaction boundaries
+- coupling
+- duplicated logic
+- testability
 
 Trace important flows across files.
 
@@ -237,265 +284,290 @@ Trace important flows across files.
 
 ## Step 4 — Inspect global configuration
 
-Inspect:
+Inspect applicable:
 
-* global elements
-* HTTP listener configuration
-* HTTP request configuration
-* database configuration
-* messaging configuration
-* connector configuration
-* TLS configuration
-* retry configuration
-* reconnection configuration
-* transaction configuration
-* property configuration
-* secure property configuration
+- global elements
+- HTTP listener configuration
+- HTTP request configuration
+- database configuration
+- messaging configuration
+- connector configuration
+- TLS configuration
+- retry configuration
+- reconnection configuration
+- transaction configuration
+- property configuration
+- secure property configuration
 
 Determine how global configuration affects runtime behavior.
 
 ---
 
-## Step 5 — Inspect DataWeave
+## Step 5 — Inspect Mule XML
+
+Review:
+
+- processor ordering
+- flow references
+- scopes
+- routing
+- variables
+- payload manipulation
+- configuration duplication
+- hardcoded values
+- deprecated configuration
+- unused configuration
+- global configuration usage
+
+Do not report a style preference as a defect.
+
+---
+
+## Step 6 — Inspect DataWeave
 
 Review applicable transformations for:
 
-* transformation correctness
-* null handling
-* missing fields
-* type conversion
-* dates
-* timezones
-* numeric precision
-* collection traversal
-* nested iteration
-* streaming
-* memory behavior
-* unnecessary transformations
-* payload copies
+- transformation correctness
+- null handling
+- missing fields
+- type conversion
+- dates
+- timezones
+- numeric precision
+- collection traversal
+- nested iteration
+- streaming
+- memory behavior
+- unnecessary transformations
+- payload copies
 
-Only report performance issues when there is a credible technical mechanism.
+Only report performance issues where there is a credible technical mechanism.
 
 ---
 
-## Step 6 — Inspect APIs
+## Step 7 — Inspect APIs
 
-Where RAML or OpenAPI specifications exist, compare implementation against the visible contract.
+Where RAML or OpenAPI specifications exist, compare implementation behavior with the visible contract.
 
 Review:
 
-* methods
-* request validation
-* response schemas
-* status codes
-* headers
-* content types
-* authentication
-* authorization
-* error contracts
-* timeout behavior
-* retry behavior
-* idempotency
-* backward compatibility
+- methods
+- request validation
+- response schemas
+- status codes
+- headers
+- content types
+- authentication
+- authorization
+- error contracts
+- timeout behavior
+- retry behavior
+- idempotency
+- backward compatibility
 
-Only report contract or compatibility problems supported by repository evidence.
+Only report contract problems supported by repository evidence.
 
 ---
 
-## Step 7 — Inspect error handling
+## Step 8 — Inspect error handling
 
 Review:
 
-* error types
-* error hierarchy
-* Try scopes
-* on-error-continue
-* on-error-propagate
-* global error handlers
-* error mapping
-* retries
-* reconnection
-* root-cause preservation
-* HTTP responses
-* transaction interaction
+- error types
+- error hierarchy
+- Try scopes
+- on-error-continue
+- on-error-propagate
+- global error handlers
+- error mapping
+- retries
+- reconnection
+- root-cause preservation
+- HTTP responses
+- transaction interaction
 
-Determine actual Mule runtime behavior before reporting an error-handling finding.
+Determine actual Mule runtime behavior before reporting an issue.
 
 ---
 
-## Step 8 — Inspect security
+## Step 9 — Inspect security
 
 Review:
 
-* passwords
-* credentials
-* API keys
-* client secrets
-* access tokens
-* private keys
-* authorization headers
-* PII
-* sensitive payloads
-* insecure HTTP
-* TLS configuration
-* authentication
-* authorization
-* injection
-* excessive permissions
-* secure properties
+- passwords
+- credentials
+- API keys
+- client secrets
+- access tokens
+- private keys
+- authorization headers
+- PII
+- sensitive payloads
+- insecure HTTP
+- TLS configuration
+- authentication
+- authorization
+- injection
+- excessive permissions
+- secure properties
 
-Never expose secret values.
+NEVER print secret values.
 
-If a secret is detected, describe the presence and location without printing the value.
+NEVER include actual secret values in review.json.
 
-Never put actual secret values into `review.json`.
+If a secret is detected:
 
----
-
-## Step 9 — Inspect connectors and integrations
-
-For applicable connectors review:
-
-* authentication
-* timeout
-* retry
-* reconnection
-* pooling
-* rate limits
-* external call volume
-* idempotency
-* transaction behavior
-* configuration reuse
-* compatibility
-
-Only report missing configuration when repository evidence establishes meaningful production impact.
+- identify the affected file or configuration
+- describe the issue without revealing the value
+- mask any required excerpt
+- never copy the secret into the finding
 
 ---
 
-## Step 10 — Inspect database access
+## Step 10 — Inspect connectors and integrations
+
+For applicable connectors inspect:
+
+- authentication
+- timeout
+- retry
+- reconnection
+- pooling
+- rate limits
+- external call volume
+- idempotency
+- transaction behavior
+- configuration reuse
+- compatibility
+
+Only report missing configuration where repository evidence establishes meaningful production impact.
+
+---
+
+## Step 11 — Inspect database access
 
 Where database access exists, inspect:
 
-* SQL correctness
-* SQL injection
-* query efficiency
-* N+1 queries
-* unbounded results
-* pagination
-* connection pooling
-* timeout
-* transaction boundaries
-* rollback
-* resource handling
-* error handling
+- SQL correctness
+- SQL injection
+- query efficiency
+- N+1 queries
+- unbounded results
+- pagination
+- connection pooling
+- timeout
+- transaction boundaries
+- rollback
+- resource handling
+- error handling
 
 Do not report speculative database risks.
 
 ---
 
-## Step 11 — Inspect messaging
+## Step 12 — Inspect messaging
 
 Where messaging exists, inspect:
 
-* acknowledgement
-* redelivery
-* duplicate processing
-* idempotency
-* retry
-* dead-letter behavior
-* poison messages
-* ordering
-* transactions
-* acknowledgement boundaries
+- acknowledgement
+- redelivery
+- duplicate processing
+- idempotency
+- retry
+- dead-letter behavior
+- poison messages
+- ordering
+- transactions
+- acknowledgement boundaries
 
 Never assume exactly-once processing without evidence.
 
 ---
 
-## Step 12 — Inspect logging and observability
+## Step 13 — Inspect logging and observability
 
 Review:
 
-* credentials
-* tokens
-* authorization headers
-* PII
-* confidential payloads
-* full payload logging
-* excessive logging
-* correlation IDs
-* diagnostic context
-* log levels
-* exceptions
-* duplicate logging
+- credentials
+- tokens
+- authorization headers
+- PII
+- confidential payloads
+- full payload logging
+- excessive logging
+- correlation IDs
+- diagnostic context
+- log levels
+- exceptions
+- duplicate logging
 
 Do not report missing logging when operational requirements are unknown.
 
 ---
 
-## Step 13 — Inspect MUnit
+## Step 14 — Inspect MUnit
 
 Review:
 
-* happy paths
-* error paths
-* important branches
-* edge cases
-* assertions
-* verification
-* mocks
-* connector failures
-* downstream failures
-* business outcomes
-* regression coverage
+- happy paths
+- error paths
+- important branches
+- edge cases
+- assertions
+- verification
+- mocks
+- connector failures
+- downstream failures
+- business outcomes
+- regression coverage
 
-A flow execution without meaningful assertions is not sufficient coverage.
+A flow executing successfully without meaningful assertions is not sufficient evidence of useful coverage.
 
-Do not create a finding merely because additional tests could theoretically be added.
+Do not create test-gap findings merely because additional tests could theoretically be added.
 
 ---
 
-## Step 14 — Inspect Maven and dependencies
+## Step 15 — Inspect Maven and dependencies
 
 Review:
 
-* Mule runtime
-* Java
-* Mule Maven Plugin
-* connector versions
-* dependency versions
-* duplicate dependencies
-* unnecessary dependencies
-* plugin configuration
-* compatibility
-* dependency conflicts
+- Mule runtime
+- Java version
+- Mule Maven Plugin
+- connector versions
+- dependency versions
+- duplicate dependencies
+- unnecessary dependencies
+- plugin configuration
+- compatibility
+- dependency conflicts
 
 Do not recommend upgrades merely because newer versions exist.
 
-A dependency finding requires an identifiable technical or compatibility concern.
+A dependency finding requires an identifiable technical, security, or compatibility concern supported by evidence.
 
 ---
 
-## Step 15 — Inspect configuration
+## Step 16 — Inspect configuration
 
 Review:
 
-* environment properties
-* secure properties
-* hardcoded URLs
-* ports
-* credentials
-* identifiers
-* deployment configuration
-* configuration duplication
-* environment separation
-* configuration resolution
+- environment properties
+- secure properties
+- hardcoded URLs
+- ports
+- credentials
+- identifiers
+- deployment configuration
+- configuration duplication
+- environment separation
+- configuration resolution
 
 Do not assume deployment configuration exists.
 
 ---
 
-# 7. EVIDENCE-FIRST DECISION PROCESS
+# 9. EVIDENCE-FIRST REVIEW
 
 For every potential issue:
 
@@ -504,7 +576,7 @@ For every potential issue:
 3. Inspect referenced configuration.
 4. Inspect related flows.
 5. Inspect DataWeave.
-6. Inspect APIs where applicable.
+6. Inspect API contracts where applicable.
 7. Inspect properties and secure properties.
 8. Inspect dependencies.
 9. Inspect MUnit tests.
@@ -513,51 +585,50 @@ For every potential issue:
 12. Determine realistic production impact.
 13. Determine severity.
 14. Determine confidence.
-15. Determine precise supported location.
+15. Determine the most precise supported location.
 16. Determine actionable remediation.
 17. Validate the finding.
-18. Report it only if repository evidence supports it.
+18. Report the finding only if repository evidence supports it.
 
 If the issue cannot be substantiated:
 
-```text
 DO NOT REPORT IT.
-```
 
 Do not report something merely because:
 
-* another implementation is possible
-* another setting could theoretically be added
-* a newer dependency version exists
-* a flow is long
-* logging could be improved
-* requirements are unknown
-* runtime metrics are unavailable
-* the implementation differs from personal preference
+- another implementation is possible
+- another setting could theoretically be added
+- a newer dependency version exists
+- a flow is long
+- logging could be improved
+- requirements are unknown
+- runtime metrics are unavailable
+- implementation differs from personal preference
 
 ---
 
-# 8. CROSS-FILE ANALYSIS
+# 10. CROSS-FILE ANALYSIS
 
 Never inspect important files in isolation.
 
 Trace relationships between:
 
-* flows
-* subflows
-* flow references
-* global configurations
-* properties
-* secure properties
-* DataWeave
-* APIs
-* connectors
-* database operations
-* messaging
-* error handlers
-* MUnit tests
-* Maven dependencies
-* deployment configuration
+- flows
+- private flows
+- subflows
+- flow references
+- global configurations
+- properties
+- secure properties
+- DataWeave
+- APIs
+- connectors
+- database operations
+- messaging
+- error handlers
+- MUnit tests
+- Maven dependencies
+- deployment configuration
 
 A potential issue in one file may be mitigated by another file.
 
@@ -565,43 +636,76 @@ Validate the complete behavior before creating a finding.
 
 ---
 
-# 9. PERFORMANCE CLASSIFICATION
+# 11. MULE RUNTIME ANALYSIS
 
-Performance observations must be classified as:
+Base runtime conclusions on defensible Mule 4 behavior.
 
-```text
+Consider, where applicable:
+
+- payload
+- attributes
+- variables
+- error types
+- error propagation
+- on-error-propagate
+- on-error-continue
+- Try scopes
+- transactions
+- retries
+- reconnection
+- acknowledgement
+- redelivery
+- idempotency
+- streaming
+- asynchronous processing
+- synchronous dependencies
+- connector behavior
+- downstream failures
+- timeout behavior
+- resource usage
+
+Do not claim runtime behavior unless technically defensible from the implementation and Mule semantics.
+
+---
+
+# 12. PERFORMANCE CLASSIFICATION
+
+Performance observations must be classified internally as one of:
+
 CONFIRMED
+
 MECHANISM-BASED RISK
+
 SPECULATIVE
-```
 
 Do not report speculative issues as confirmed defects.
 
 Consider:
 
-* large payloads
-* payload materialization
-* streaming
-* DataWeave complexity
-* nested iteration
-* N+1 external calls
-* N+1 database calls
-* unbounded collections
-* unbounded database results
-* excessive logging
-* excessive retries
-* blocking operations
-* sequential processing
-* payload copies
-* concurrency
+- large payloads
+- payload materialization
+- streaming
+- DataWeave complexity
+- nested iteration
+- N+1 external calls
+- N+1 database calls
+- unbounded collections
+- unbounded database results
+- excessive logging
+- excessive retries
+- blocking operations
+- sequential processing
+- payload copies
+- concurrency
+
+Only report performance findings when the implementation provides a credible mechanism for production impact.
 
 ---
 
-# 10. FINDING REQUIREMENTS
+# 13. FINDING REQUIREMENTS
 
 Every material finding MUST contain:
 
-```text
 id
 severity
 category
@@ -612,33 +716,27 @@ problem
 evidence
 impact
 recommendation
-```
 
-An optional `evidenceExcerpt` may be included when useful and safe.
+An optional evidenceExcerpt may be included when useful and safe.
 
-Allowed severities:
+Allowed severity values:
 
-```text
 CRITICAL
 HIGH
 MEDIUM
 LOW
 NIT
-```
 
 Allowed confidence values:
 
-```text
 HIGH
 MEDIUM
 LOW
-```
 
-Finding IDs must use the appropriate domain prefix defined by the applicable reference.
+Finding IDs MUST use the applicable framework category prefix.
 
 Examples:
 
-```text
 ARCH-001
 XML-001
 DW-001
@@ -653,78 +751,77 @@ PERF-001
 MUNIT-001
 MAVEN-001
 CFG-001
-```
 
 Do not invent unsupported finding categories.
 
 Do not duplicate findings.
 
-Group occurrences when they have the same:
+Group multiple occurrences when they share the same:
 
-* root cause
-* impact
-* remediation
+- root cause
+- impact
+- remediation
 
 Separate findings when root cause, impact, remediation, or severity materially differs.
 
 ---
 
-# 11. SEVERITY
+# 14. SEVERITY
 
-Use the severity definitions in the framework.
+Use evidence and realistic production impact.
 
 ## CRITICAL
 
 Examples:
 
-* exposed secrets
-* severe authorization bypass
-* severe TLS weakness
-* likely data loss
-* likely data corruption
-* catastrophic failure
+- exposed secrets
+- severe authorization bypass
+- severe TLS weakness
+- likely data loss
+- likely data corruption
+- catastrophic failure
 
 ## HIGH
 
 Examples:
 
-* major security issue
-* message loss
-* duplicate processing
-* API breakage
-* severe error-handling issue
-* unsafe retry
-* transaction defect
-* severe reliability issue
-* severe performance issue
+- major security issue
+- message loss
+- duplicate processing
+- API breakage
+- severe error-handling issue
+- unsafe retry
+- transaction defect
+- severe reliability issue
+- severe performance issue
 
 ## MEDIUM
 
 Examples:
 
-* meaningful functional defect
-* realistic edge-case failure
-* important test gap
-* moderate performance issue
-* production-impacting configuration problem
+- meaningful functional defect
+- realistic edge-case failure
+- important test gap
+- moderate performance issue
+- production-impacting configuration problem
 
 ## LOW
 
 Examples:
 
-* limited production risk
-* minor operational issue
-* lower-priority improvement
+- limited production risk
+- minor operational issue
+- lower-priority improvement
 
 ## NIT
 
 Use only for optional, low-impact improvements.
 
-Severity must reflect actual evidence and production impact.
+Severity MUST reflect actual evidence and production impact.
 
 ---
 
-# 12. CONFIDENCE
+# 15. CONFIDENCE
 
 ## HIGH
 
@@ -742,337 +839,493 @@ Avoid LOW-confidence findings unless the potential production impact makes the i
 
 ---
 
-# 13. MISSING INFORMATION
+# 16. MISSING INFORMATION
 
 Use exactly:
 
-```text
 Not Identified
-```
 
 when information is unavailable.
 
-Use:
+Use exactly:
 
-```text
 Not Assessed
-```
 
 when an area could not reasonably be reviewed.
 
-Use:
+Use exactly:
 
-```text
 Not Applicable
-```
 
-when the area does not apply.
+when an area does not apply.
 
 Do not convert missing information into a finding.
 
 ---
 
-# 14. POSITIVE OBSERVATIONS
+# 17. POSITIVE OBSERVATIONS
 
-Record meaningful strengths supported by repository evidence.
+Record only meaningful strengths supported by repository evidence.
 
 Examples include:
 
-* effective secure properties
-* strong error taxonomy
-* appropriate retry behavior
-* good idempotency controls
-* effective streaming
-* clean flow separation
-* useful operational logging
-* strong API contract alignment
-* meaningful MUnit assertions
+- effective secure properties
+- strong error taxonomy
+- appropriate retry behavior
+- good idempotency controls
+- effective streaming
+- clean flow separation
+- useful operational logging
+- strong API contract alignment
+- meaningful MUnit assertions
 
 Do not provide generic praise.
 
+Each positive observation should be traceable to repository evidence.
+
 ---
 
-# 15. PRODUCTION READINESS
+# 18. PRODUCTION READINESS
 
-Assess production readiness based on evidence.
+Assess production readiness based on repository evidence.
 
 Consider:
 
-* security
-* reliability
-* error recovery
-* idempotency
-* observability
-* performance
-* scalability
-* configuration
-* testing
-* operational support
-* downstream failure behavior
-* timeout behavior
-* retries
-* resource exhaustion
-* recovery behavior
+- security
+- reliability
+- error recovery
+- idempotency
+- observability
+- performance
+- scalability
+- configuration
+- testing
+- operational support
+- downstream failure behavior
+- timeout behavior
+- retries
+- resource exhaustion
+- recovery behavior
 
-Use only readiness statuses defined by the report schema:
+Use ONLY readiness statuses supported by the authoritative report schema.
 
-```text
+If the schema defines the following statuses, use only these:
+
 READY
 PARTIAL
 NOT READY
 NOT APPLICABLE
 NOT ASSESSED
-```
+
+Do not invent readiness statuses.
 
 ---
 
-# 16. REQUIRED REVIEW JSON STRUCTURE
+# 19. REQUIRED REVIEW JSON
 
-The structured review must provide enough information for the report generator to produce all required report sections.
+The authoritative schema is:
 
-Use:
-
-```text
 $REVIEW_KIT_ROOT/references/review-report-schema.md
-```
 
-as the authoritative report schema.
+Read that schema before creating review.json.
 
-The JSON must contain information for:
+Follow that schema exactly.
 
-* application information
-* review type
-* review date
-* reviewer
-* overall risk
-* overall recommendation
-* executive summary
-* review scope
-* review methodology
-* findings
-* category assessments
-* production readiness
-* positive observations
-* risk summary
-* remediation priorities
-* review limitations
-* review coverage
-* review controls
-* verdict reconciliation where applicable
+The review JSON must contain all required fields defined by that schema.
+
+It must provide enough information for the report generator to produce all required report sections.
+
+Where required by the schema, represent:
+
+- application information
+- review type
+- review date
+- reviewer
+- overall risk
+- overall recommendation
+- executive summary
+- review scope
+- review methodology
+- findings
+- category assessments
+- production readiness
+- positive observations
+- risk summary
+- remediation priorities
+- review limitations
+- review coverage
+- review controls
+- verdict reconciliation
 
 Every required category must be represented.
 
-If a category does not apply, use:
+For categories that do not apply, use:
 
-```text
 Not Applicable
-```
 
-If information is unavailable, use:
+For unavailable information, use:
 
-```text
 Not Identified
-```
 
-If an area could not reasonably be reviewed, use:
+For areas that could not reasonably be reviewed, use:
 
-```text
 Not Assessed
-```
+
+Do not invent fields that conflict with the authoritative schema.
 
 ---
 
-# 17. FINDING EVIDENCE
+# 20. FINDING EVIDENCE
 
 Evidence must identify actual repository material.
 
 Prefer:
 
-* file paths relative to `APPLICATION_ROOT`
-* flow names
-* processor names
-* configuration names
-* DataWeave locations
-* API paths
-* test names
-* dependency declarations
-* structural locations
+- paths relative to APPLICATION_ROOT
+- flow names
+- processor names
+- configuration names
+- DataWeave locations
+- API paths
+- test names
+- dependency declarations
+- structural locations
 
 Use exact line numbers only when confidently established.
 
-Do not fabricate line numbers.
+Do not fabricate:
 
-Do not fabricate source excerpts.
+- line numbers
+- source excerpts
+- runtime behavior
+- configuration
+- test coverage
+- requirements
 
 Do not include sensitive values.
 
+If evidence contains a secret, redact it.
+
 ---
 
-# 18. SOURCE PROTECTION
+# 21. SOURCE PROTECTION
 
-The MuleSoft application under:
+The MuleSoft application is strictly read-only.
 
-```text
-$APPLICATION_ROOT
-```
+DO NOT:
 
-is strictly read-only.
+- modify Mule XML
+- modify DataWeave
+- modify properties
+- modify secure properties
+- modify RAML
+- modify OpenAPI
+- modify MUnit tests
+- modify pom.xml
+- modify dependencies
+- modify deployment configuration
+- create implementation files
+- commit changes
+- push changes
+- checkout another branch
+- reset the repository
+- delete source files
+- rename source files
+- perform remediation
 
-Do not:
+Do not run commands whose purpose is to alter the application source.
 
-* modify source files
-* modify Mule XML
-* modify DataWeave
-* modify properties
-* modify secure properties
-* modify API specifications
-* modify MUnit tests
-* modify `pom.xml`
-* modify dependencies
-* modify deployment configuration
-* create implementation files
-* commit changes
-* push changes
-* checkout another branch
-* reset the repository
-* delete repository files
-* rename repository files
-* perform remediation
+The ONLY application file Claude is authorized to create or modify is:
 
-The only file Claude is permitted to create as the review artifact is:
-
-```text
 $APPLICATION_ROOT/workspace/execution/review.json
-```
 
 Do not create review artifacts inside:
 
-```text
 $REVIEW_KIT_ROOT
-```
 
 Do not modify the review framework.
 
 ---
 
-# 19. FINAL VERDICT
+# 22. FINAL VERDICT
 
 Determine the overall risk and recommendation from the validated findings.
 
 Mandatory minimums:
 
-| Findings Present | Minimum Risk | Minimum Recommendation     |
-| ---------------- | ------------ | -------------------------- |
-| Any CRITICAL     | CRITICAL     | HIGH RISK                  |
-| Any HIGH         | HIGH         | CHANGES REQUIRED           |
-| Any MEDIUM       | MEDIUM       | CHANGES REQUIRED           |
-| LOW or NIT only  | LOW          | APPROVE WITH MINOR CHANGES |
-| No findings      | LOW          | APPROVE                    |
+Findings Present | Minimum Risk | Minimum Recommendation
+
+Any CRITICAL | CRITICAL | HIGH RISK
+
+Any HIGH | HIGH | CHANGES REQUIRED
+
+Any MEDIUM | MEDIUM | CHANGES REQUIRED
+
+LOW or NIT only | LOW | APPROVE WITH MINOR CHANGES
+
+No findings | LOW | APPROVE
 
 A more severe recommendation is allowed.
 
-A less severe recommendation is not allowed.
+A less severe recommendation is NOT allowed.
 
-If reconciliation changes the verdict, preserve the original verdict using:
+If the final verdict differs from the initial verdict after reconciliation, preserve the original verdict using the schema-supported fields:
 
-```text
 originalOverallRisk
-originalOverallRecommendation
-```
 
-and document the reconciliation.
+originalOverallRecommendation
+
+and document why reconciliation changed the verdict.
+
+Before writing the final JSON, independently verify that the verdict satisfies the mandatory minimums.
 
 ---
 
-# 20. FINAL SELF-VALIDATION
+# 23. REVIEW COVERAGE
 
-Before declaring the review complete, verify:
+The final review must honestly represent what was actually inspected.
 
-* repository structure was reviewed
-* application metadata was reviewed
-* runtime was reviewed
-* Maven was reviewed
-* important flows were reviewed
-* global configuration was reviewed
-* DataWeave was reviewed
-* APIs were reviewed where available
-* security was reviewed
-* logging was reviewed
-* integrations were reviewed
-* database was reviewed where applicable
-* messaging was reviewed where applicable
-* performance was reviewed
-* MUnit was reviewed
-* dependencies were reviewed
-* configuration was reviewed
-* findings were validated
-* duplicate findings were removed
-* production readiness was assessed
-* limitations were documented
-* final recommendation was reconciled
+Before completion, verify whether the following were reasonably assessed:
+
+- repository structure
+- application metadata
+- Mule runtime
+- Java
+- Maven
+- Mule Maven Plugin
+- important flows
+- private flows
+- subflows
+- global configuration
+- Mule XML
+- DataWeave
+- APIs where available
+- security
+- logging
+- connectors
+- external integrations
+- database where applicable
+- messaging where applicable
+- performance
+- MUnit
+- dependencies
+- configuration
+- production readiness
+
+Do not claim an area was reviewed if it was not reasonably assessed.
+
+If something could not be assessed, represent it honestly as:
+
+Not Assessed
+
+or use another value required by the schema.
+
+---
+
+# 24. CREATE review.json
+
+You MUST physically create:
+
+$APPLICATION_ROOT/workspace/execution/review.json
+
+Before writing the file:
+
+1. Complete the review.
+2. Construct the complete JSON object according to the authoritative schema.
+3. Ensure all required fields are present.
+4. Ensure findings contain all mandatory finding fields.
+5. Ensure no sensitive values are included.
+6. Ensure the verdict satisfies the mandatory severity rules.
+7. Write the JSON to the exact absolute path.
+
+Do NOT merely print JSON in your response.
+
+Use the available file-writing capability to physically create the file.
+
+---
+
+# 25. READ BACK review.json
+
+After creating:
+
+$APPLICATION_ROOT/workspace/execution/review.json
+
+you MUST read the file back.
+
+Verify that the file physically exists.
+
+Verify that the file is not empty.
+
+Parse it as JSON.
+
+Confirm the root value is a JSON object.
+
+Confirm:
+
+findings
+
+is an array.
+
+For every finding, confirm these fields exist:
+
+id
+severity
+category
+title
+location
+confidence
+problem
+evidence
+impact
+recommendation
+
+Confirm every finding has an allowed severity:
+
+CRITICAL
+HIGH
+MEDIUM
+LOW
+NIT
+
+Confirm every finding has an allowed confidence:
+
+HIGH
+MEDIUM
+LOW
+
+Confirm no secret values are present.
+
+Confirm the overall verdict is reconciled against the findings.
+
+Confirm the JSON conforms to:
+
+$REVIEW_KIT_ROOT/references/review-report-schema.md
+
+If validation fails:
+
+1. Correct review.json.
+2. Read it again.
+3. Validate it again.
+4. Do not claim completion until validation succeeds.
+
+---
+
+# 26. FINAL SELF-VALIDATION
+
+Before declaring completion, verify:
+
+- repository structure was reviewed
+- application metadata was reviewed
+- runtime was reviewed
+- Java was reviewed where identifiable
+- Maven was reviewed
+- important flows were reviewed
+- global configuration was reviewed
+- Mule XML was reviewed
+- DataWeave was reviewed
+- APIs were reviewed where available
+- security was reviewed
+- logging was reviewed
+- integrations were reviewed
+- database was reviewed where applicable
+- messaging was reviewed where applicable
+- performance was reviewed
+- MUnit was reviewed
+- dependencies were reviewed
+- configuration was reviewed
+- findings were evidence-based
+- findings were validated
+- duplicate findings were removed
+- production readiness was assessed
+- limitations were documented
+- final recommendation was reconciled
+- review.json exists at the exact required path
+- review.json was read back
+- review.json was parsed successfully
+- findings is an array
+- every finding contains all mandatory fields
+- no sensitive values are present
+- the final verdict satisfies the mandatory minimums
 
 Do not claim an area was reviewed if it was not reasonably assessed.
 
 ---
 
-# 21. CREATE review.json
+# 27. ABSOLUTE PATH REQUIREMENT
 
-Write the completed structured review to exactly:
+The only authoritative review output is:
 
-```text
 $APPLICATION_ROOT/workspace/execution/review.json
-```
 
-Before finishing:
+Do not create:
 
-1. Confirm the file exists.
-2. Read the file back.
-3. Parse it as JSON.
-4. Confirm it is a JSON object.
-5. Confirm `findings` is an array.
-6. Confirm every finding contains:
+$REVIEW_KIT_ROOT/workspace/execution/review.json
 
-   * `id`
-   * `severity`
-   * `category`
-   * `title`
-   * `location`
-   * `confidence`
-   * `problem`
-   * `evidence`
-   * `impact`
-   * `recommendation`
-7. Confirm no secret values are present.
-8. Confirm the final verdict is reconciled against the findings.
+Do not create:
 
-The file must contain the complete structured review.
+./review.json
 
-Do not merely output the JSON in your response.
+unless ./ is definitively:
 
-You must physically create the file.
+$APPLICATION_ROOT
 
-Do not say that the review was written unless the file actually exists.
+Prefer the absolute path:
+
+$APPLICATION_ROOT/workspace/execution/review.json
+
+This prevents the review from being accidentally created in the framework repository or another working directory.
 
 ---
 
-# 22. COMPLETION REQUIREMENT
+# 28. WORKSPACE PERSISTENCE
 
-The review is NOT complete until this file physically exists:
+The workflow executes multiple Bash steps.
 
-```text
+Files created in:
+
+$APPLICATION_ROOT/workspace/execution/
+
+persist between workflow steps.
+
+The Claude process MUST therefore create:
+
 $APPLICATION_ROOT/workspace/execution/review.json
-```
+
+on the shared GitHub Actions workspace filesystem.
+
+The next workflow step must be able to find it at exactly that path.
+
+Do not rely on:
+
+- shell variables
+- current directory
+- command history
+- Claude conversation output
+- terminal output
+- environment variables created only inside a shell command
+
+The physical file is the source of truth.
+
+---
+
+# 29. COMPLETION REQUIREMENT
+
+The review is NOT complete until this exact file physically exists:
+
+$APPLICATION_ROOT/workspace/execution/review.json
+
+and contains valid structured JSON conforming to the authoritative review schema.
 
 The final Word report is NOT your responsibility.
 
-Do not generate a `.docx`.
+Do not generate a .docx.
 
 Do not perform remediation.
 
 Do not modify the MuleSoft application.
 
-After successfully creating and validating the file, respond only with:
+Do not modify the review framework.
 
-```text
+After successfully creating and validating the file, respond ONLY with:
+
 Review JSON created: $APPLICATION_ROOT/workspace/execution/review.json
-```

@@ -1474,13 +1474,50 @@ The review is complete only when:
 
 # 42. Final Chat Response
 
-When running in GitHub Actions, the final response must contain only:
+When running in GitHub Actions, Claude's final chat response is NOT the authoritative review result.
+
+The authoritative result is the actual review artifact created on disk.
+
+Claude MUST first create and validate:
 
 ```text
-Overall Status: <PASS | FAIL | BLOCKED>
-Recommendation: <APPROVE | APPROVE WITH MINOR CHANGES | CHANGES REQUIRED | HIGH RISK>
-Report: reports/<generated-file-name>.docx
+$APPLICATION_ROOT/workspace/execution/review.json
 ```
+
+Claude MUST NOT claim that the review is complete unless this file physically exists and contains valid JSON.
+
+Claude MUST NOT generate, reference, or claim to generate a Word report. The review workflow does not require Claude to create a `.docx` report.
+
+After successfully creating and validating `review.json`, Claude must respond only with the following message, including the FULL absolute path to the generated file:
+
+```text
+Review JSON created: $APPLICATION_ROOT/workspace/execution/review.json
+```
+
+The path MUST be the actual absolute filesystem path where the file was created.
+
+Do not output the complete review in the chat response.
+
+Do not output the findings in the chat response.
+
+Do not output a Markdown report.
+
+Do not generate a `.docx` report.
+
+Do not claim that a `.docx` report exists.
+
+The GitHub Actions workflow is responsible only for validating and consuming the `review.json` artifact as required by the review pipeline.
+
+If the workflow requires a final status message, it must be based on the actual contents and validation results of `review.json`, not on Claude's natural-language response.
+
+If `review.json` does not exist or is invalid, Claude MUST NOT report:
+
+```text
+Review JSON created: $APPLICATION_ROOT/workspace/execution/review.json
+```
+
+Instead, Claude must continue working until the required `review.json` is successfully created and validated, or report that the review is blocked if it is genuinely unable to create the required artifact.
+
 
 Do not include:
 
