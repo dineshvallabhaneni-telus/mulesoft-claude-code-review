@@ -1,0 +1,860 @@
+# ============================================================
+# MuleSoft Enterprise Code Review Framework Configuration
+# ============================================================
+
+framework:
+  name: "MuleSoft Enterprise Code Review Framework"
+
+  version_file: "VERSION"
+
+  mode: "production-readiness"
+
+  instructions:
+    path: "${GITHUB_WORKSPACE}/code-review/CLAUDE.md"
+
+  prompt:
+    path: "${GITHUB_WORKSPACE}/code-review/prompts/mulesoft-review.md"
+
+
+# ============================================================
+# Workspace
+# ============================================================
+
+workspace:
+
+  root:
+    path: "${GITHUB_WORKSPACE}"
+
+  application:
+    path: "${GITHUB_WORKSPACE}/application"
+
+  review_framework:
+    path: "${GITHUB_WORKSPACE}/code-review"
+
+  reports:
+    path: "${GITHUB_WORKSPACE}/reports"
+
+  temporary:
+    path: "${GITHUB_WORKSPACE}/.review-tmp"
+
+
+# ============================================================
+# Source
+# ============================================================
+
+source:
+
+  branch: "develop"
+
+  application_root:
+    path: "${GITHUB_WORKSPACE}/application"
+
+  expected_files:
+    - "pom.xml"
+    - "mule-artifact.json"
+
+  source_directories:
+    - "src"
+
+  supported_file_types:
+
+    mule:
+      - "*.xml"
+
+    dataweave:
+      - "*.dwl"
+
+    java:
+      - "*.java"
+
+    python:
+      - "*.py"
+
+    properties:
+      - "*.properties"
+
+    yaml:
+      - "*.yaml"
+      - "*.yml"
+
+    json:
+      - "*.json"
+
+    api:
+      - "*.raml"
+      - "*.oas"
+      - "*.yaml"
+      - "*.yml"
+
+
+# ============================================================
+# Exclusions
+# ============================================================
+
+exclusions:
+
+  directories:
+    - "${GITHUB_WORKSPACE}/code-review"
+    - "${GITHUB_WORKSPACE}/reports"
+    - "${GITHUB_WORKSPACE}/.review-tmp"
+
+  patterns:
+    - "**/.git/**"
+    - "**/target/**"
+    - "**/node_modules/**"
+    - "**/.idea/**"
+    - "**/.vscode/**"
+
+  framework_content:
+    - "agents"
+    - "skills"
+    - "rules"
+    - "prompts"
+    - "standards"
+    - "scripts"
+    - "framework configuration"
+
+  generated_content:
+    - "generated reports"
+    - "temporary review files"
+    - "build artifacts"
+
+
+# ============================================================
+# Review Domains
+# ============================================================
+
+review:
+
+  enabled: true
+
+  domains:
+
+    architecture:
+      enabled: true
+      priority: 1
+      agent: "${GITHUB_WORKSPACE}/code-review/.claude/agents/architecture-reviewer.md"
+      skill: "${GITHUB_WORKSPACE}/code-review/.claude/skills/mulesoft-architecture/SKILL.md"
+      standard: "${GITHUB_WORKSPACE}/code-review/standards/architecture/architecture-standards.md"
+
+    mule_code_quality:
+      enabled: true
+      priority: 2
+      agent: "${GITHUB_WORKSPACE}/code-review/.claude/agents/mule-code-reviewer.md"
+      skill: "${GITHUB_WORKSPACE}/code-review/.claude/skills/mule-code-quality/SKILL.md"
+      standard: "${GITHUB_WORKSPACE}/code-review/standards/coding/coding-standards.md"
+
+    connectors:
+      enabled: true
+      priority: 3
+      agent: "${GITHUB_WORKSPACE}/code-review/.claude/agents/connector-reviewer.md"
+      skill: "${GITHUB_WORKSPACE}/code-review/.claude/skills/connector-analysis/SKILL.md"
+      standard: "${GITHUB_WORKSPACE}/code-review/standards/connectors/connector-standards.md"
+
+    api_security:
+      enabled: true
+      priority: 4
+      agent: "${GITHUB_WORKSPACE}/code-review/.claude/agents/api-security-reviewer.md"
+      skill: "${GITHUB_WORKSPACE}/code-review/.claude/skills/api-security-analysis/SKILL.md"
+      standard: "${GITHUB_WORKSPACE}/code-review/standards/api-security/api-security-standards.md"
+
+    security:
+      enabled: true
+      priority: 5
+      agent: "${GITHUB_WORKSPACE}/code-review/.claude/agents/security-reviewer.md"
+      skill: "${GITHUB_WORKSPACE}/code-review/.claude/skills/security-analysis/SKILL.md"
+      standard: "${GITHUB_WORKSPACE}/code-review/standards/security/security-standards.md"
+
+    performance:
+      enabled: true
+      priority: 6
+      agent: "${GITHUB_WORKSPACE}/code-review/.claude/agents/performance-reviewer.md"
+      skill: "${GITHUB_WORKSPACE}/code-review/.claude/skills/performance-analysis/SKILL.md"
+      standard: "${GITHUB_WORKSPACE}/code-review/standards/performance/performance-standards.md"
+
+    configuration:
+      enabled: true
+      priority: 7
+      agent: "${GITHUB_WORKSPACE}/code-review/.claude/agents/configuration-reviewer.md"
+      skill: "${GITHUB_WORKSPACE}/code-review/.claude/skills/configuration-analysis/SKILL.md"
+      standard: "${GITHUB_WORKSPACE}/code-review/standards/configuration/configuration-standards.md"
+
+    logging:
+      enabled: true
+      priority: 8
+      agent: "${GITHUB_WORKSPACE}/code-review/.claude/agents/logging-reviewer.md"
+      skill: "${GITHUB_WORKSPACE}/code-review/.claude/skills/logging-analysis/SKILL.md"
+      standard: "${GITHUB_WORKSPACE}/code-review/standards/logging/logging-standards.md"
+
+    munit:
+      enabled: true
+      priority: 9
+      agent: "${GITHUB_WORKSPACE}/code-review/.claude/agents/munit-reviewer.md"
+      skill: "${GITHUB_WORKSPACE}/code-review/.claude/skills/munit-analysis/SKILL.md"
+      standard: "${GITHUB_WORKSPACE}/code-review/standards/munit/munit-standards.md"
+
+    duplication:
+      enabled: true
+      priority: 10
+      skill: "${GITHUB_WORKSPACE}/code-review/.claude/skills/duplication-analysis/SKILL.md"
+
+    dataweave:
+      enabled: true
+      priority: 11
+      standard: "${GITHUB_WORKSPACE}/code-review/standards/dataweave/dataweave-standards.md"
+
+    error_handling:
+      enabled: true
+      priority: 12
+      standard: "${GITHUB_WORKSPACE}/code-review/standards/error-handling/error-handling-standards.md"
+
+    naming:
+      enabled: true
+      priority: 13
+      standard: "${GITHUB_WORKSPACE}/code-review/standards/naming/naming-standards.md"
+
+
+# ============================================================
+# Agents
+# ============================================================
+
+agents:
+
+  enabled: true
+
+  execution:
+    mode: "specialist-review"
+    parallel: false
+
+  specialists:
+
+    - name: "architecture-reviewer"
+      enabled: true
+      path: "${GITHUB_WORKSPACE}/code-review/.claude/agents/architecture-reviewer.md"
+
+    - name: "mule-code-reviewer"
+      enabled: true
+      path: "${GITHUB_WORKSPACE}/code-review/.claude/agents/mule-code-reviewer.md"
+
+    - name: "connector-reviewer"
+      enabled: true
+      path: "${GITHUB_WORKSPACE}/code-review/.claude/agents/connector-reviewer.md"
+
+    - name: "security-reviewer"
+      enabled: true
+      path: "${GITHUB_WORKSPACE}/code-review/.claude/agents/security-reviewer.md"
+
+    - name: "api-security-reviewer"
+      enabled: true
+      path: "${GITHUB_WORKSPACE}/code-review/.claude/agents/api-security-reviewer.md"
+
+    - name: "performance-reviewer"
+      enabled: true
+      path: "${GITHUB_WORKSPACE}/code-review/.claude/agents/performance-reviewer.md"
+
+    - name: "munit-reviewer"
+      enabled: true
+      path: "${GITHUB_WORKSPACE}/code-review/.claude/agents/munit-reviewer.md"
+
+    - name: "configuration-reviewer"
+      enabled: true
+      path: "${GITHUB_WORKSPACE}/code-review/.claude/agents/configuration-reviewer.md"
+
+    - name: "logging-reviewer"
+      enabled: true
+      path: "${GITHUB_WORKSPACE}/code-review/.claude/agents/logging-reviewer.md"
+
+    - name: "report-reviewer"
+      enabled: true
+      path: "${GITHUB_WORKSPACE}/code-review/.claude/agents/report-reviewer.md"
+
+
+# ============================================================
+# Skills
+# ============================================================
+
+skills:
+
+  required: true
+
+  paths:
+
+    - "${GITHUB_WORKSPACE}/code-review/.claude/skills/mulesoft-architecture/SKILL.md"
+    - "${GITHUB_WORKSPACE}/code-review/.claude/skills/mule-code-quality/SKILL.md"
+    - "${GITHUB_WORKSPACE}/code-review/.claude/skills/connector-analysis/SKILL.md"
+    - "${GITHUB_WORKSPACE}/code-review/.claude/skills/api-security-analysis/SKILL.md"
+    - "${GITHUB_WORKSPACE}/code-review/.claude/skills/security-analysis/SKILL.md"
+    - "${GITHUB_WORKSPACE}/code-review/.claude/skills/performance-analysis/SKILL.md"
+    - "${GITHUB_WORKSPACE}/code-review/.claude/skills/munit-analysis/SKILL.md"
+    - "${GITHUB_WORKSPACE}/code-review/.claude/skills/configuration-analysis/SKILL.md"
+    - "${GITHUB_WORKSPACE}/code-review/.claude/skills/logging-analysis/SKILL.md"
+    - "${GITHUB_WORKSPACE}/code-review/.claude/skills/duplication-analysis/SKILL.md"
+    - "${GITHUB_WORKSPACE}/code-review/.claude/skills/word-report-generation/SKILL.md"
+
+
+# ============================================================
+# Rules
+# ============================================================
+
+rules:
+
+  required: true
+
+  paths:
+
+    - "${GITHUB_WORKSPACE}/code-review/.claude/rules/review-scope.md"
+    - "${GITHUB_WORKSPACE}/code-review/.claude/rules/finding-rules.md"
+    - "${GITHUB_WORKSPACE}/code-review/.claude/rules/security-rules.md"
+    - "${GITHUB_WORKSPACE}/code-review/.claude/rules/report-rules.md"
+
+
+# ============================================================
+# Standards
+# ============================================================
+
+standards:
+
+  required: true
+
+  paths:
+
+    - "${GITHUB_WORKSPACE}/code-review/standards/architecture/architecture-standards.md"
+    - "${GITHUB_WORKSPACE}/code-review/standards/api-security/api-security-standards.md"
+    - "${GITHUB_WORKSPACE}/code-review/standards/coding/coding-standards.md"
+    - "${GITHUB_WORKSPACE}/code-review/standards/connectors/connector-standards.md"
+    - "${GITHUB_WORKSPACE}/code-review/standards/configuration/configuration-standards.md"
+    - "${GITHUB_WORKSPACE}/code-review/standards/dataweave/dataweave-standards.md"
+    - "${GITHUB_WORKSPACE}/code-review/standards/error-handling/error-handling-standards.md"
+    - "${GITHUB_WORKSPACE}/code-review/standards/logging/logging-standards.md"
+    - "${GITHUB_WORKSPACE}/code-review/standards/munit/munit-standards.md"
+    - "${GITHUB_WORKSPACE}/code-review/standards/naming/naming-standards.md"
+    - "${GITHUB_WORKSPACE}/code-review/standards/performance/performance-standards.md"
+    - "${GITHUB_WORKSPACE}/code-review/standards/security/security-standards.md"
+
+
+# ============================================================
+# Findings
+# ============================================================
+
+findings:
+
+  enabled: true
+
+  evidence_required: true
+  solution_required: true
+  impact_required: true
+  recommendation_required: true
+
+  classifications:
+    - "Confirmed"
+    - "Likely"
+    - "Potential"
+    - "Verification Required"
+
+  severity:
+    allowed:
+      - "Critical"
+      - "High"
+      - "Medium"
+      - "Low"
+      - "Warning"
+      - "Informational"
+
+  avoid_false_positives: true
+  avoid_duplicate_findings: true
+  avoid_generic_findings: true
+
+  duplicate_policy:
+
+    consolidate_same_root_cause: true
+    consolidate_same_solution: true
+    retain_separate_when_severity_differs: true
+    retain_separate_when_business_impact_differs: true
+
+
+# ============================================================
+# Security
+# ============================================================
+
+security:
+
+  secret_detection:
+    enabled: true
+
+  redact_secrets: true
+
+  redaction_value: "[REDACTED]"
+
+  never_report_values:
+    - "password"
+    - "secret"
+    - "token"
+    - "api_key"
+    - "client_secret"
+    - "private_key"
+    - "access_token"
+    - "refresh_token"
+    - "encryption_key"
+    - "credential"
+
+  credential_exposure:
+    severity: "Critical"
+    require_rotation_guidance: true
+    require_repository_history_review: true
+
+
+# ============================================================
+# API Security
+# ============================================================
+
+api_security:
+
+  enabled: true
+
+  infrastructure_controls:
+    verification_required_when_unavailable: true
+
+  controls:
+
+    authentication: true
+    authorization: true
+    tls: true
+    oauth: true
+    jwt: true
+    client_id_enforcement: true
+    input_validation: true
+    rate_limiting: true
+    cors: true
+    sensitive_data: true
+    error_disclosure: true
+    webhook_security: true
+    idempotency: true
+
+
+# ============================================================
+# Environments
+# ============================================================
+
+environments:
+
+  enabled: true
+
+  expected:
+    - "DEV"
+    - "QA"
+    - "UAT"
+    - "PROD"
+
+  allow_additional: true
+
+  compare:
+
+    property_keys: true
+    property_structure: true
+    naming: true
+    security_settings: true
+
+  ignore_legitimate_value_differences: true
+
+  missing_environment_information:
+    classification: "Verification Required"
+
+
+# ============================================================
+# MUnit
+# ============================================================
+
+munit:
+
+  enabled: true
+
+  missing_coverage_severity: "Warning"
+
+  required_scenarios:
+
+    - "Happy path"
+    - "Invalid input"
+    - "Connector failure"
+    - "Timeout"
+    - "Authentication failure"
+    - "Downstream 4xx"
+    - "Downstream 5xx"
+    - "Empty response"
+    - "Null values"
+    - "Transformation failure"
+    - "Error handler behavior"
+
+
+# ============================================================
+# Performance
+# ============================================================
+
+performance:
+
+  enabled: true
+
+  analyze:
+
+    connector_calls_in_loops: true
+    repeated_external_calls: true
+    large_payloads: true
+    streaming: true
+    batching: true
+    bulk_operations: true
+    database_access: true
+    connection_pooling: true
+    retries: true
+    timeouts: true
+    concurrency: true
+    parallel_processing: true
+    logging_overhead: true
+    memory_consumption: true
+
+  avoid_blind_optimization: true
+
+  parallel_processing:
+
+    require_downstream_capacity_check: true
+    require_ordering_check: true
+    require_transaction_check: true
+    require_rate_limit_check: true
+
+
+# ============================================================
+# Architecture
+# ============================================================
+
+architecture:
+
+  enabled: true
+
+  detect_implementation: true
+  do_not_assume_api_led: true
+  evidence_required: true
+
+  diagram:
+
+    enabled: true
+    generate_when_evidence_sufficient: true
+    never_invent_components: true
+
+  incomplete_evidence_message: >
+    Architecture evidence incomplete — infrastructure verification required.
+
+
+# ============================================================
+# Logging
+# ============================================================
+
+logging:
+
+  enabled: true
+
+  analyze:
+
+    correlation_id: true
+    traceability: true
+    business_context: true
+    external_system_context: true
+    error_context: true
+    payload_logging: true
+    header_logging: true
+    sensitive_data: true
+    duplicate_logging: true
+    performance_impact: true
+
+  prohibit_secret_values: true
+
+
+# ============================================================
+# Custom Code
+# ============================================================
+
+custom_code:
+
+  enabled: true
+
+  analyze:
+
+    java: true
+    python: true
+    scripts: true
+    custom_extensions: true
+
+  replacement_candidates:
+
+    dataweave: true
+    mule_processors: true
+    mule_connectors: true
+    standard_modules: true
+
+  do_not_recommend_replacement_without_evidence: true
+
+
+# ============================================================
+# Duplication
+# ============================================================
+
+duplication:
+
+  enabled: true
+
+  analyze:
+
+    flows: true
+    subflows: true
+    logic_blocks: true
+    transformations: true
+    connector_calls: true
+    variables: true
+    loggers: true
+    error_handling: true
+    connector_configuration: true
+    properties: true
+
+  report_only_meaningful_duplication: true
+
+
+# ============================================================
+# Scoring
+# ============================================================
+
+scoring:
+
+  enabled: true
+
+  dimensions:
+
+    architecture:
+      weight: 15
+
+    code_quality:
+      weight: 10
+
+    connectors:
+      weight: 10
+
+    api_security:
+      weight: 10
+
+    security:
+      weight: 15
+
+    performance:
+      weight: 10
+
+    configuration:
+      weight: 10
+
+    logging:
+      weight: 5
+
+    munit:
+      weight: 5
+
+    maintainability:
+      weight: 10
+
+  methodology:
+
+    do_not_score_by_finding_count_only: true
+    severity_weighted: true
+    business_impact_weighted: true
+    technical_impact_weighted: true
+
+
+# ============================================================
+# Report
+# ============================================================
+
+report:
+
+  enabled: true
+
+  format: "docx"
+
+  output_directory:
+    path: "${GITHUB_WORKSPACE}/reports"
+
+  filename:
+
+    prefix: "mulesoft-standards-review"
+    timestamp_format: "%Y%m%d_%H%M%S"
+    extension: ".docx"
+
+  expected_filename_pattern:
+    value: "mulesoft-standards-review_[0-9]{8}_[0-9]{6}.docx"
+
+  generation:
+
+    require_executive_summary: true
+    require_architecture: true
+    require_findings_with_solutions: true
+    require_severity_representation: true
+    require_secret_protection: true
+
+  visual:
+
+    enabled: true
+    architecture_diagram: true
+    severity_tables: true
+    scorecards: true
+    charts_when_data_exists: true
+    risk_summary: true
+    remediation_roadmap: true
+
+  severity_colors:
+
+    critical: "#8B0000"
+    high: "#C00000"
+    medium: "#ED7D31"
+    low: "#FFC000"
+    warning: "#5B9BD5"
+    informational: "#A6A6A6"
+    positive: "#70AD47"
+
+
+# ============================================================
+# Report Validation
+# ============================================================
+
+validation:
+
+  enabled: true
+
+  require_file_exists: true
+  require_non_empty_file: true
+  require_readable_docx: true
+  require_executive_summary: true
+  require_architecture_details: true
+  require_finding_solutions: true
+  require_consistent_severity: true
+  require_secret_scan: true
+  require_framework_exclusion: true
+  require_filename_validation: true
+
+  validate_statistics: true
+  validate_charts: true
+  validate_tables: true
+
+  fail_on:
+
+    corrupted_docx: true
+    missing_required_sections: true
+    secret_exposure: true
+    invalid_filename: true
+    missing_report: true
+    validation_failure: true
+
+
+# ============================================================
+# Artifact
+# ============================================================
+
+artifact:
+
+  enabled: true
+
+  name: "mulesoft-standards-review"
+
+  path:
+    value: "${GITHUB_WORKSPACE}/reports/mulesoft-standards-review_*.docx"
+
+  upload_by:
+    system: "github-actions"
+
+  claude_must_not_upload_artifact: true
+
+
+# ============================================================
+# Completion
+# ============================================================
+
+completion:
+
+  require_successful_review: true
+  require_report_generation: true
+  require_report_validation: true
+  require_exact_report_path: true
+
+  response:
+
+    required: true
+
+    final_line: "Download full report: <absolute-report-path>"
+
+  do_not_claim_success_before_validation: true
+
+
+# ============================================================
+# GitHub Actions
+# ============================================================
+
+github_actions:
+
+  enabled: true
+
+  runner:
+    os: "ubuntu-latest"
+
+  application_branch: "develop"
+
+  framework_branch: "develop"
+
+  directories:
+
+    application: "application"
+    framework: "code-review"
+    reports: "reports"
+
+  execution_order:
+
+    - "checkout_application"
+    - "checkout_code_review_framework"
+    - "prepare_workspace"
+    - "install_claude"
+    - "authenticate_claude"
+    - "run_review"
+    - "validate_report"
+    - "upload_report_artifact"
+
+  artifact_upload:
+
+    enabled: true
+    if_report_exists: true
+
+  fail_workflow_if:
+
+    review_fails: true
+    report_missing: true
+    report_invalid: true
+    report_validation_fails: true
+
+
+# ============================================================
+# Operational Behavior
+# ============================================================
+
+execution:
+
+  fail_fast: true
+
+  require_framework_files: true
+  require_prompt: true
+  require_agents: true
+  require_skills: true
+  require_rules: true
+  require_standards: true
+
+  temporary_files:
+
+    cleanup_after_review: true
+
+  generated_report:
+
+    preserve: true
+
+  logs:
+
+    do_not_print_secrets: true
+    redact_sensitive_values: true

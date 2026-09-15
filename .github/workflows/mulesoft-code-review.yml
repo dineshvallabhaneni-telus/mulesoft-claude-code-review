@@ -1,0 +1,377 @@
+name: MuleSoft Enterprise Code Review
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - develop
+
+  pull_request:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+env:
+  APPLICATION_BRANCH: develop
+  REVIEW_FRAMEWORK_BRANCH: develop
+
+jobs:
+
+  mulesoft-code-review:
+
+    name: MuleSoft Standards Review
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 120
+
+    steps:
+
+      # --------------------------------------------------------
+      # 1. Display environment
+      # --------------------------------------------------------
+
+      - name: Display runner information
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          echo "============================================================"
+          echo " MuleSoft Code Review"
+          echo "============================================================"
+
+          echo "Operating system:"
+          uname -a
+
+          echo ""
+          echo "Ubuntu:"
+          cat /etc/os-release
+
+          echo ""
+          echo "Git:"
+          git --version
+
+          echo ""
+          echo "Workspace:"
+          echo "${GITHUB_WORKSPACE}"
+
+      # --------------------------------------------------------
+      # 2. Checkout MuleSoft application
+      # --------------------------------------------------------
+
+      - name: Checkout MuleSoft application develop branch
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          path: application
+          fetch-depth: 0
+
+      # --------------------------------------------------------
+      # 3. Checkout code-review framework
+      # --------------------------------------------------------
+
+      - name: Checkout code-review framework develop branch
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/code-review
+          ref: develop
+          path: code-review
+          fetch-depth: 0
+          token: ${{ secrets.CODE_REVIEW_REPO_TOKEN || github.token }}
+
+      # --------------------------------------------------------
+      # 4. Create review workspace
+      # --------------------------------------------------------
+
+      - name: Prepare review workspace
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          echo "============================================================"
+          echo " Preparing review workspace"
+          echo "============================================================"
+
+          mkdir -p "${GITHUB_WORKSPACE}/reports"
+
+          echo "Application:"
+          find "${GITHUB_WORKSPACE}/application" \
+            -maxdepth 2 \
+            -type f \
+            | sort \
+            | head -100
+
+          echo ""
+          echo "Code-review framework:"
+          find "${GITHUB_WORKSPACE}/code-review" \
+            -maxdepth 3 \
+            -type f \
+            | sort \
+            | head -200
+
+          echo ""
+          echo "Reports:"
+          ls -la "${GITHUB_WORKSPACE}/reports"
+
+      # --------------------------------------------------------
+      # 5. Move application into expected workspace layout
+      # --------------------------------------------------------
+
+      - name: Build Claude workspace
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          echo "============================================================"
+          echo " Building Claude workspace"
+          echo "============================================================"
+
+          TEMP_APPLICATION="${RUNNER_TEMP}/mulesoft-application"
+
+          rm -rf "${TEMP_APPLICATION}"
+          mkdir -p "${TEMP_APPLICATION}"
+
+          cp -a "${GITHUB_WORKSPACE}/application/." "${TEMP_APPLICATION}/"
+
+          rm -rf "${TEMP_APPLICATION}/code-review"
+          rm -rf "${TEMP_APPLICATION}/reports"
+
+          cp -a "${GITHUB_WORKSPACE}/code-review" \
+                "${TEMP_APPLICATION}/code-review"
+
+          mkdir -p "${TEMP_APPLICATION}/reports"
+
+          echo "Application workspace prepared at:"
+          echo "${TEMP_APPLICATION}"
+
+          echo ""
+          echo "Top-level structure:"
+          find "${TEMP_APPLICATION}" \
+            -maxdepth 2 \
+            -type d \
+            | sort
+
+          echo ""
+          echo "Application source files:"
+          find "${TEMP_APPLICATION}" \
+            -type f \
+            ! -path "${TEMP_APPLICATION}/code-review/*" \
+            ! -path "${TEMP_APPLICATION}/reports/*" \
+            | sort \
+            | head -200
+
+          echo ""
+          echo "${TEMP_APPLICATION}" > "${RUNNER_TEMP}/review-workspace-path"
+
+      # --------------------------------------------------------
+      # 6. Install system dependencies
+      # --------------------------------------------------------
+
+      - name: Install report dependencies
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          sudo apt-get update
+
+          sudo apt-get install -y \
+            unzip \
+            zip \
+            jq \
+            xmlstarlet \
+            python3 \
+            python3-pip \
+            python3-venv \
+            libreoffice \
+            pandoc
+
+          echo ""
+          echo "Installed dependencies successfully."
+
+      # --------------------------------------------------------
+      # 7. Install Node.js
+      # --------------------------------------------------------
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # --------------------------------------------------------
+      # 8. Install Claude CLI
+      # --------------------------------------------------------
+
+      - name: Install Claude CLI
+        shell: bash
+        env:
+          NPM_CONFIG_PREFIX: ${{ runner.temp }}/npm-global
+        run: |
+          set -Eeuo pipefail
+
+          mkdir -p "${NPM_CONFIG_PREFIX}/bin"
+
+          npm install -g @anthropic-ai/claude-code
+
+          echo "${NPM_CONFIG_PREFIX}/bin" >> "${GITHUB_PATH}"
+
+          echo "Claude CLI installed."
+
+          claude --version
+
+      # --------------------------------------------------------
+      # 9. Prepare workspace script
+      # --------------------------------------------------------
+
+      - name: Prepare MuleSoft review workspace
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          REVIEW_WORKSPACE="$(cat "${RUNNER_TEMP}/review-workspace-path")"
+
+          echo "Review workspace:"
+          echo "${REVIEW_WORKSPACE}"
+
+          chmod +x \
+            "${REVIEW_WORKSPACE}/code-review/scripts/prepare-workspace.sh"
+
+          cd "${REVIEW_WORKSPACE}"
+
+          export GITHUB_WORKSPACE="${REVIEW_WORKSPACE}"
+
+          ./code-review/scripts/prepare-workspace.sh
+
+      # --------------------------------------------------------
+      # 10. Run Claude review
+      # --------------------------------------------------------
+
+      - name: Run MuleSoft Enterprise Code Review
+        shell: bash
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -Eeuo pipefail
+
+          REVIEW_WORKSPACE="$(cat "${RUNNER_TEMP}/review-workspace-path")"
+
+          echo "============================================================"
+          echo " Starting MuleSoft Enterprise Code Review"
+          echo "============================================================"
+
+          echo "Review workspace:"
+          echo "${REVIEW_WORKSPACE}"
+
+          if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+            echo "ERROR: ANTHROPIC_API_KEY secret is not configured."
+            exit 1
+          fi
+
+          chmod +x \
+            "${REVIEW_WORKSPACE}/code-review/scripts/run-review.sh"
+
+          cd "${REVIEW_WORKSPACE}"
+
+          export GITHUB_WORKSPACE="${REVIEW_WORKSPACE}"
+
+          ./code-review/scripts/run-review.sh
+
+      # --------------------------------------------------------
+      # 11. Validate generated report
+      # --------------------------------------------------------
+
+      - name: Validate MuleSoft review report
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          REVIEW_WORKSPACE="$(cat "${RUNNER_TEMP}/review-workspace-path")"
+
+          chmod +x \
+            "${REVIEW_WORKSPACE}/code-review/scripts/validate-report.sh"
+
+          cd "${REVIEW_WORKSPACE}"
+
+          export GITHUB_WORKSPACE="${REVIEW_WORKSPACE}"
+
+          ./code-review/scripts/validate-report.sh
+
+      # --------------------------------------------------------
+      # 12. Locate generated report
+      # --------------------------------------------------------
+
+      - name: Locate final report
+        id: report
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          REVIEW_WORKSPACE="$(cat "${RUNNER_TEMP}/review-workspace-path")"
+
+          REPORT="$(find "${REVIEW_WORKSPACE}/reports" \
+            -maxdepth 1 \
+            -type f \
+            -name 'mulesoft-standards-review_*.docx' \
+            | sort \
+            | tail -1)"
+
+          if [[ -z "${REPORT}" ]]; then
+            echo "ERROR: Final report was not found."
+            exit 1
+          fi
+
+          echo "Report:"
+          echo "${REPORT}"
+
+          echo "report=${REPORT}" >> "${GITHUB_OUTPUT}"
+
+          cp "${REPORT}" "${GITHUB_WORKSPACE}/$(basename "${REPORT}")"
+
+      # --------------------------------------------------------
+      # 13. Upload Word document
+      # --------------------------------------------------------
+
+      - name: Upload MuleSoft review report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mulesoft-standards-review
+          path: ${{ steps.report.outputs.report }}
+          if-no-files-found: error
+          retention-days: 30
+
+      # --------------------------------------------------------
+      # 14. Upload Claude execution log
+      # --------------------------------------------------------
+
+      - name: Upload Claude review log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mulesoft-code-review-log
+          path: |
+            ${{ steps.report.outputs.report }}/../claude-review-output.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      # --------------------------------------------------------
+      # 15. Final completion message
+      # --------------------------------------------------------
+
+      - name: Review completed
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          REPORT="${{ steps.report.outputs.report }}"
+
+          echo ""
+          echo "============================================================"
+          echo " MuleSoft code review completed successfully."
+          echo "============================================================"
+          echo ""
+          echo "Download full report: ${REPORT}"
+          echo ""
+          echo "GitHub Actions artifact:"
+          echo "mulesoft-standards-review"
