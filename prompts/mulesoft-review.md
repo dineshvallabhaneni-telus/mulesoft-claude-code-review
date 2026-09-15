@@ -1377,20 +1377,38 @@ Do not report problems merely to increase finding counts.
 Every reported problem must have a reason and a solution.
 
 
-# 57. Final Output Document Creation and Response Requirements
+# 57. Final Output Response Requirements
 
-Document Creation Response Requirements
+After completing the review:
 
-The response must contain exactly one of the following two outputs:
+If the Word document was successfully created, validated, and exists at the required location, return exactly:
 
-Document created - The document name and The full file path
+Document created - <absolute-report-path>
 
-Use this only when the Word document has been successfully created and is available for return.
+Example:
 
-Document not created
+Document created - /github/workspace/reports/mulesoft-standards-review_20260915_175045.docx
 
-Use this if the Word document was not successfully created or cannot be returned.
+If the Word document was not successfully created, does not exist, failed validation, or cannot be returned, return exactly:
 
-Strict Requirement:
+Document not created.
 
-The entire response must be exactly either “Document created” or “Document not created”.
+Strict Response Requirement
+
+The final response MUST contain exactly one of the following:
+
+Document created - <absolute-report-path>
+
+or
+
+Document not created.
+
+No additional text, explanation, summary, finding counts, Markdown, code blocks, links, or other content may be included in the final response.
+
+The absolute report path MUST be included when the document is successfully created.
+
+Do not claim Document created unless the .docx file actually exists and has successfully passed the required validation.
+
+Do not return the report filename without the absolute path.
+
+Do not return a placeholder such as <absolute-report-path> in the actual response.
